@@ -1,0 +1,563 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 37,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "import pandas as pd\n",
+    "from scipy import stats\n",
+    "import numpy as np"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 38,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "'\\nDetermine whether male and female listeners are significantly \\ndifferent in their overall listening (in terms of the count \\nof track listens, or in terms of the total time spent listening)\\n'"
+      ]
+     },
+     "execution_count": 38,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "'''\n",
+    "Determine whether male and female listeners are significantly \n",
+    "different in their overall listening (in terms of the count \n",
+    "of track listens, or in terms of the total time spent listening)\n",
+    "'''"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 39,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "#read in data\n",
+    "endsong_csv = '/Users/markostamenovic/Downloads/data_sample/end_song_sample.csv'\n",
+    "userdata_csv = '/Users/markostamenovic/Downloads/data_sample/user_data_sample.csv'\n",
+    "userdata = pd.read_csv(userdata_csv, skipinitialspace=True);\n",
+    "endsong = pd.read_csv(endsong_csv, skipinitialspace=True);"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 40,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "#merge databases\n",
+    "usersong = pd.merge(left=userdata,right=endsong, left_on='user_id', right_on='user_id')\n",
+    "\n",
+    "#drop unknown gender\n",
+    "binary_ms=usersong[['gender','ms_played','user_id']]\n",
+    "binary_ms = binary_ms[binary_ms.gender != 'unknown']"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 41,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "9539"
+      ]
+     },
+     "execution_count": 41,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#check for uniqueness\n",
+    "len(binary_ms.user_id.unique())\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 42,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "#perform transformations to combine nonunique user_id plays\n",
+    "plays_id = binary_ms.groupby('user_id').sum()\n",
+    "gender_id = binary_ms[['user_id', 'gender']]\n",
+    "gender_id=gender_id.drop_duplicates(subset='user_id', keep='last')\n",
+    "plays_id['user_id'] = plays_id.index\n",
+    "gender_total = pd.merge(left=gender_id,right=plays_id, left_on='user_id', right_on='user_id')\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 43,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "#split according to gender\n",
+    "female_ms = gender_total[gender_total['gender'] == 'female']['ms_played']\n",
+    "male_ms = gender_total[gender_total['gender'] == 'male']['ms_played']"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 44,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "#normalize to seconds \n",
+    "male_s = [i/1000 for i in male_ms]\n",
+    "female_s = [i/1000 for i in female_ms]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 45,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "Ttest_indResult(statistic=0.49487725289252299, pvalue=0.62069816865329197)"
+      ]
+     },
+     "execution_count": 45,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#t-test\n",
+    "stats.ttest_ind(female_ms, male_ms)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 46,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "Ttest_indResult(statistic=0.4948775831280065, pvalue=0.62069793553982366)"
+      ]
+     },
+     "execution_count": 46,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "stats.ttest_ind(female_s, male_s)\n",
+    "#Ttest_indResult(statistic=0.4948775831280065, pvalue=0.62069793553982366)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 47,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "'''\n",
+    "p-values > 0.1 => reject null hypothesis\n",
+    "there is a statistical difference between male and female average listening time\n",
+    "male is higher on average\n",
+    "'''"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 48,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "#unique play length values\n",
+    "num_uv=len(gender_total.ms_played.unique())/10;"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 49,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "#plotting\n",
+    "import matplotlib.pyplot as plt\n",
+    "\n",
+    "#unique play length values\n",
+    "num_uv=len(gender_total.ms_played.unique())/10;\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 50,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "[<matplotlib.text.Text at 0x10c456910>, <matplotlib.text.Text at 0x10c816410>]"
+      ]
+     },
+     "execution_count": 50,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#boxplot\n",
+    "data_to_plot = [female_s, male_s]\n",
+    "fig = plt.figure(1, figsize=(9, 6))\n",
+    "ax = fig.add_subplot(111)\n",
+    "bp = ax.boxplot(data_to_plot)\n",
+    "ax.set_xticklabels(['female', 'male'])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 51,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "<matplotlib.legend.Legend at 0x10d7cd750>"
+      ]
+     },
+     "execution_count": 51,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#histogram\n",
+    "plt.hist(female_s, bins=num_uv, histtype='step', color='b', label='female')\n",
+    "plt.hist(male_s, bins=num_uv, histtype='step', color='r', label='male')\n",
+    "plt.xlim([0, 10000])\n",
+    "plt.legend()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 52,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "'\\nAnalysis suggestion 1: \\nBreak the user listening into sessions (exactly what is a \\nlistening session is up to you to define)\\nLook for correlations between user demographic features \\n(or their behavior) and their overall listening, or \\ntheir average session lengths\\n'"
+      ]
+     },
+     "execution_count": 52,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "'''\n",
+    "Analysis suggestion 1: \n",
+    "Break the user listening into sessions (exactly what is a \n",
+    "listening session is up to you to define)\n",
+    "Look for correlations between user demographic features \n",
+    "(or their behavior) and their overall listening, or \n",
+    "their average session lengths\n",
+    "'''"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 53,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "#extract gmt time from epoch time\n",
+    "import time\n",
+    "usersong_clean = usersong\n",
+    "\n",
+    "#columns for day, hour, min, weekday \n",
+    "usersong_clean['day']=usersong_clean.end_timestamp.apply(lambda x : time.gmtime(x)[2])\n",
+    "usersong_clean['hour']=usersong_clean.end_timestamp.apply(lambda x : time.gmtime(x)[3])\n",
+    "usersong_clean['min']=usersong_clean.end_timestamp.apply(lambda x : time.gmtime(x)[4])\n",
+    "usersong_clean['wday']=usersong_clean.end_timestamp.apply(lambda x : time.gmtime(x)[6])\n",
+    "\n",
+    "del usersong_clean['end_timestamp']"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 54,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "#perform transformations to combine nonunique user_id plays\n",
+    "#define session as userid+day+hour (all plays in one month of one year)\n",
+    "usersong_clean[\"session\"] = usersong_clean[\"user_id\"].astype(str) + usersong_clean[\"day\"].astype(str) +usersong_clean[\"hour\"].astype(str)\n",
+    "\n",
+    "sesh_total = usersong_clean[['session', 'ms_played']]\n",
+    "sesh_total = sesh_total.groupby('session').sum()\n",
+    "sesh_total['session_id'] = sesh_total.index\n",
+    "sesh_mean = pd.merge(left=sesh_total,right=usersong_clean, left_on='session_id', right_on='session')\n",
+    "sesh_mean = sesh_mean.groupby('user_id').mean()\n",
+    "sesh_mean['avg_sesh_ms']=sesh_mean['ms_played_x']\n",
+    "sesh_mean = sesh_mean.drop(['ms_played_x','acct_age_weeks','day','hour','min','wday'], axis=1)\n",
+    "sesh_mean['user_id'] = sesh_mean.index"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 55,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "#combine session totals with full dataset and prune\n",
+    "del usersong_clean['ms_played']\n",
+    "usersong_clean = pd.merge(left=sesh_mean,right=usersong_clean, left_on='user_id', right_on='user_id')\n",
+    "usersong_clean=usersong_clean.drop_duplicates(subset='user_id', keep='last')\n",
+    "\n",
+    "usersong_clean['avg_sesh_min']=usersong_clean['avg_sesh_ms']/60000\n",
+    "usersong_clean['avg_sesh_min']=usersong_clean['avg_sesh_min'].round(0)\n",
+    "\n",
+    "usersong_clean['avg_sesh_songs']=usersong_clean['avg_sesh_min']/3.5\n",
+    "usersong_clean['avg_sesh_songs']=usersong_clean['avg_sesh_songs'].round(0)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 79,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "def svctest(sesh_increment,attribute):\n",
+    "    '''returns scores of linear svc classifier for given inputs'''\n",
+    "    #cross validation\n",
+    "    from sklearn.cross_validation import train_test_split\n",
+    "    X_train, X_test, y_train, y_test = train_test_split(usersong_clean[sesh_increment].reshape(-1,1).tolist(), usersong_clean[attribute].reshape(-1,1).tolist(), test_size=0.33, random_state=42)\n",
+    "\n",
+    "    from sklearn import svm\n",
+    "    clf = svm.SVC(kernel='linear', C=1)\n",
+    "    clf.fit(X_train, y_train)\n",
+    "    return clf.score(X_test, y_test)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 65,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "#define list of features to test\n",
+    "feature_list = list(usersong_clean.columns.values)[2:9]\n",
+    "clfscore = [svctest(i) for i in feature_list]\n",
+    "\n",
+    "clf_scores = pd.DataFrame(data=feature_list,columns=['feature list'])\n",
+    "clf_scores['svc']=clfscore"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 71,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "'\\nclf_scores=\\n     feature list       svc\\n0          gender  0.515996\\n1       age_range  0.318657\\n2         country  0.330060\\n3  acct_age_weeks  0.040862\\n4         context  0.431105\\n5        track_id  0.006652\\n6         product  0.808996\\n\\nwe can see the only feature with a strong correlation to mean session play length is product.\\n'"
+      ]
+     },
+     "execution_count": 71,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "'''\n",
+    "clf_scores=\n",
+    "     feature list       svc\n",
+    "0          gender  0.515996\n",
+    "1       age_range  0.318657\n",
+    "2         country  0.330060\n",
+    "3  acct_age_weeks  0.040862\n",
+    "4         context  0.431105\n",
+    "5        track_id  0.006652\n",
+    "6         product  0.808996\n",
+    "\n",
+    "we can see the only feature with a strong correlation to mean session play length is product.\n",
+    "one would assume that users who are paying for the service may\n",
+    "like to get the most out of it. some visualization may be helpful in confirming this.\n",
+    "'''"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 75,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "feature_list = list(usersong_clean.columns.values)[2:9]\n",
+    "#kmeans\n",
+    "from scipy.cluster.vq import *\n",
+    "#kmeans clustering with k=10\n",
+    "voc, variance = kmeans(usersong_clean['avg_sesh_ms'].tolist(), 10, 1)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 77,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "#create column corresponding to clusters\n",
+    "def kmeans_estimator (x,voc):\n",
+    "    '''returns closest cluster center for a given value'''\n",
+    "    diffs = [abs(x-i) for i in voc.tolist()]\n",
+    "    index = diffs.index(min(diffs))    \n",
+    "    return voc[index]\n",
+    "    \n",
+    "usersong_clean['kmeans_sesh_ms']=usersong_clean.avg_sesh_ms.apply(lambda x : kmeans_estimator(x,voc))\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "#test\n",
+    "svctest('kmeans_sesh_ms','context')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "#score classifier with clusters at k=10\n",
+    "clusterscore = [svctest(i) for i in feature_list]\n",
+    "\n",
+    "clf_scores['kmeans = 10 + svc']=clusterscore"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "'''\n",
+    "i also would have liked to perhaps test a naive bayes classifier on this data. more cross validation should have been \n",
+    "used but i have already spent a few hours on the code. \n",
+    "\n",
+    "kmeans clustering was implemented on avg user play length for k=10. variance of clusters was within \n",
+    "reasonable limits and it is possible that clustering before feeding to the classifier will give better correlations.\n",
+    "however, classification with clustering data did not finish at time of submittal\n",
+    "and again, i have already spent a good amount of time with this code.\n",
+    "'''"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "usersong_clean['kmeans_sesh_ms']"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 2",
+   "language": "python",
+   "name": "python2"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 2
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython2",
+   "version": "2.7.12"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 0
+}
