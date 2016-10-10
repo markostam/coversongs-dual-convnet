@@ -14,14 +14,15 @@ def txt_to_cliques(shs_loc):
 	shs = list(open(shs_loc))
 	shs = shs[14:]
 	cliques = {}
+	tempKey = None
 	for ent in shs:
 		ent = ent.replace('\n','')
 		if ent[0] == '%':
+			if tempKey:
+				yield cliques[tempKey]
 			tempKey = ent.lower()
-			cliques[tempKey] = []
 		else:
 			cliques[tempKey].append(ent.split("<SEP>")[0]+'.mp3')
-	return cliques
 
 def feature_extract(song_loc)
 	#...
