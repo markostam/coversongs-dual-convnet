@@ -54,18 +54,6 @@ class AudioCNN(object):
             pool = tf.nn.max_pool(x, ksize=[1, kx, ky, 1], strides=[1, sx, sy, 1], padding='SAME')
             return pool
 
-        def fc(self, out_size, name=None):
-            with tf.variable_scope(name) as scope:
-                input = self.get_last_output()
-                shape = input.get_shape().as_list()
-                in_size = np.prod(shape[1:])
-                weights = self.create_variable("weights", [in_size, out_size])
-                bias = self.create_variable("bias", [out_size])
-                input_flat = tf.reshape(input, [-1, in_size])
-                fc = tf.nn.relu(tf.nn.xw_plus_b(input_flat, weights, bias, name=scope.name))
-                self.add_layer(name, fc)
-            return self
-
         # Keeping track of l2 regularization loss (optional)
         l2_loss = tf.constant(0.0)
 
