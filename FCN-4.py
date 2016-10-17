@@ -22,13 +22,7 @@ class AudioCNN(object):
             '''
             return tf.get_variable(name, shape, initializer=tf.random_normal_initializer())
 
-        # def conv2d(x, W, b, strides=1):
-        #     # Conv2D wrapper, with bias and relu activation
-        #     x = tf.nn.conv2d(x, W, strides=[1, strides, strides, 1], padding='SAME')
-        #     x = tf.nn.bias_add(x, b)
-        #     return tf.nn.relu(x)
-
-        def conv(self, x, kx, ky, sx, sy, in_depth, num_filters, name=None):
+        def conv(self, x, kx, ky, sx=1, sy=1, in_depth, num_filters, name=None):
             '''
             Function that defines a convolutional layer
             -------------------------------------------
@@ -38,7 +32,6 @@ class AudioCNN(object):
             in_depth    : depth of input tensor
             num_filters : number of conv filters
             '''
-            name = name or self.get_unique_name("conv")
             with tf.variable_scope(name) as scope:
                 kernel = self.create_variable("weights", [kx, ky, in_depth, num_filters])
                 bias = self.create_variable("bias", [num_filters])
@@ -48,15 +41,20 @@ class AudioCNN(object):
                 #self.add_layer(name, conv)
             return conv
 
-        def pool(self, kx, ky, sx=1, sy=1, name=None):
-            name = name or self.get_unique_name("pool")
-            input = self.get_last_output()
-            pool = tf.nn.max_pool(input, ksize=[1, kx, ky, 1], strides=[1, sx, sy, 1], padding='SAME')
-            self.add_layer(name, pool)
-            return self
+        def pool(self, x, kx, ky, sx=None, sy=None, name=None):
+            '''
+            Function that defines a pooling layer
+            If no specified stride: stride = kernel size
+            -------------------------------------------
+            x           : input tensor
+            kx,ky       : kernel dimensions
+            sx,sy       : stride dimensions
+            '''            
+            if not sx or sy: sx,sy = kx,ky
+            pool = tf.nn.max_pool(x, ksize=[1, kx, ky, 1], strides=[1, sx, sy, 1], padding='SAME')
+            return pool
 
         def fc(self, out_size, name=None):
-            name = name or self.get_unique_name("fc")
             with tf.variable_scope(name) as scope:
                 input = self.get_last_output()
                 shape = input.get_shape().as_list()
@@ -68,72 +66,55 @@ class AudioCNN(object):
                 self.add_layer(name, fc)
             return self
 
-
-
         # Keeping track of l2 regularization loss (optional)
         l2_loss = tf.constant(0.0)
 
-        '''
-        # Embedding layer
-        with tf.device('/gpu:4'), tf.name_scope("embedding"):
-            W = tf.Variable(
-                tf.random_uniform([vocab_size, embedding_size], -1.0, 1.0),
-                name="W")
-            self.embedded_chars = tf.nn.embedding_lookup(W, self.input_x)
-            self.embedded_chars_expanded = tf.expand_dims(self.embedded_chars, -1)
-        '''
+        with tf.name_scope("conv-song1"):
+            # convolution architecture for first song ('original song')
+            conv1a = conv(self, x=song1, kx=3, ky=3, in_depth=1, num_filters=128, name=conv1a)
+            conv1a = pool(self, conv1a, kx=2, ky=4, name=pool1a)
+            # conv2a
+            conv2a = conv(self, x=x, kx=3, ky=3, in_depth=128, num_filters=384, name=conv2a)
+            conv2a = pool(self, conv2a, kx=3, ky=5, name=pool2a)
+            # conv3a
+            conv3a = conv(self, x=x, kx=3, ky=3, in_depth=384, num_filters=768, name=conv3a)
+            conv3a = pool(self, conv3a, kx=3, ky=8, name=pool3a)
+            # conv4a
+            conv4a = conv(self, x=x, kx=3, ky=3, in_depth=768, num_filters=2048, name=conv4a)
+            conv4a = pool(self, conv4a, kx=4, ky=16, name=pool4a)
+            self.song1_out = tf.reshape(conv4a, [-1, 2048])
 
-        # Create a convolution + maxpool layer for each filter size
-        pooled_outputs = []
+        with tf.name_scope("conv-song2"):
+            # convolution architecture for second song ('cover song')
+            conv1b = conv(self, x=song2, kx=3, ky=3, in_depth=1, num_filters=128, name=conv1b)
+            conv1b = pool(self, conv1b, kx=2, ky=4, name=pool1b)
+            # conv2b
+            conv2b = conv(self, x=x, kx=3, ky=3, in_depth=128, num_filters=384, name=conv2b)
+            conv2b = pool(self, conv2b, kx=3, ky=5, name=pool2b)
+            # conv3b
+            conv3b = conv(self, x=x, kx=3, ky=3, in_depth=384, num_filters=768, name=conv3b)
+            conv3b = pool(self, conv3b, kx=3, ky=8, name=pool3b)
+            # conv4b
+            conv4b = conv(self, x=x, kx=3, ky=3, in_depth=768, num_filters=2048, name=conv4b)
+            conv4b = pool(self, conv4b, kx=4, ky=16, name=pool4b)            
+            self.song2_out = tf.reshape(conv4b, [-1, 2048])
 
-        #for i, filter_size in enumerate(filter_sizes):
-        filter_size = [3,3]
-        num_filters = 128
-        depth = 
-        with tf.name_scope("conv-maxpool-1"):
-            # Convolution Layer
-            filter_shape = [filter_size[0], embedding_size[1], 1, num_filters]
-            W = tf.Variable(tf.truncated_normal(filter_shape, stddev=0.1), name="W")
-            b = tf.Variable(tf.constant(0.1, shape=[num_filters]), name="b")
-            conv = tf.nn.conv2d(
-                self.embedded_chars_expanded,
-                W,
-                strides=[1, 1, 1, 1],
-                padding="VALID",
-                name="conv")
-            # Apply nonlinearity
-            if activation_func == 'tanh':
-                h = tf.nn.tanh(tf.nn.bias_add(conv, b), name = 'tanh')
-            else:
-                h = tf.nn.relu(tf.nn.bias_add(conv, b), name="relu")
-            # Maxpooling over the outputs
-            pooled = tf.nn.max_pool(
-                h,
-                ksize=[1, sequence_length - filter_size + 1, 1, 1],
-                strides=[1, 1, 1, 1],
-                padding='VALID',
-                name="pool")
-            pooled_outputs.append(pooled)
-
-        # Combine all the pooled features
-        num_filters_total = num_filters * len(filter_sizes)
-        self.h_pool = tf.concat(3, pooled_outputs)
-        self.h_pool_flat = tf.reshape(self.h_pool, [-1, num_filters_total])
+        # concatenate transformed song vectors
+        self.songs_vector = tf.concat(1, [self.song1_out,self.song2_out])
 
         # Add dropout
         self.dropout_keep_prob = tf.placeholder(tf.float32)
-        drop = tf.nn.dropout(self.h_pool_flat, self.dropout_keep_prob)
+        drop = tf.nn.dropout(self.songs_vector, self.dropout_keep_prob)
 
         # Final (unnormalized) scores and predictions
         with tf.name_scope("output"):
             W = tf.get_variable(
                 "W",
-                shape=[num_filters_total, num_classes],
+                shape=[4096, num_classes],
                 initializer=tf.contrib.layers.xavier_initializer())
-            b = tf.Variable(tf.constant(0.1, shape=[num_classes]), name="b")
+            b = tf.Variable(tf.constant(0.1, shape=[4096]), name="b")
             l2_loss += tf.nn.l2_loss(W)
             l2_loss += tf.nn.l2_loss(b)
-            # check if we have one or two fully connected layers
             self.scores = tf.nn.xw_plus_b(drop, W, b, name="scores")
             self.predictions = tf.argmax(self.scores, 1, name="predictions")
 
