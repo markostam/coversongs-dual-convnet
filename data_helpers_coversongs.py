@@ -36,6 +36,13 @@ def feature_extract(songfile_name):
 					filter_scale=1, norm=1, sparsity=0.01, real=None)
 	return songfile_name, C
 
+def create_and_save_feature_matrix(song_folder):
+	feature_matrix = {}
+	for filename in os.listdir(song_folder):
+		if filename.endswith(".mp3"):
+			name, features = feature_extract(filename)
+			feature_matrix[name] = features
+	return feature_matrix
 
 
 def get_labels(cliques):

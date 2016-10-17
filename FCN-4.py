@@ -56,26 +56,27 @@ class AudioCNN(object):
 
         # Keeping track of l2 regularization loss (optional)
         l2_loss = tf.constant(0.0)
-
-        with tf.name_scope("conv-song1"):
-            # convolution architecture for first song ('original song')
-            conv1a = conv(self, x=song1, kx=3, ky=3, in_depth=1, num_filters=128, name=conv1a)
-            conv1a = pool(self, conv1a, kx=2, ky=4, name=pool1a)
-            # conv2a
-            conv2a = conv(self, x=x, kx=3, ky=3, in_depth=128, num_filters=384, name=conv2a)
-            conv2a = pool(self, conv2a, kx=3, ky=5, name=pool2a)
-            # conv3a
-            conv3a = conv(self, x=x, kx=3, ky=3, in_depth=384, num_filters=768, name=conv3a)
-            conv3a = pool(self, conv3a, kx=3, ky=8, name=pool3a)
-            # conv4a
-            conv4a = conv(self, x=x, kx=3, ky=3, in_depth=768, num_filters=2048, name=conv4a)
-            conv4a = pool(self, conv4a, kx=4, ky=16, name=pool4a)
-            self.song1_out = tf.reshape(conv4a, [-1, 2048])
+        
+        def thing(song,name_scope):
+            with tf.name_scope("conv-song1"):
+                # convolution architecture for first song ('original song')
+                conv1a = conv(self, x=song, kx=3, ky=3, in_depth=1, num_filters=128, name='conv1a')
+                conv1a = pool(self, conv1a, kx=2, ky=4, name='pool1a')
+                # conv2a
+                conv2a = conv(self, x=x, kx=3, ky=3, in_depth=128, num_filters=384, name='conv2a')
+                conv2a = pool(self, conv2a, kx=3, ky=5, name='pool2a')
+                # conv3a
+                conv3a = conv(self, x=x, kx=3, ky=3, in_depth=384, num_filters=768, name='conv3a')
+                conv3a = pool(self, conv3a, kx=3, ky=8, name='pool3a')
+                # conv4a
+                conv4a = conv(self, x=x, kx=3, ky=3, in_depth=768, num_filters=2048, name='conv4a')
+                conv4a = pool(self, conv4a, kx=4, ky=16, name='pool4a')
+                return tf.reshape(conv4a, [-1, 2048])
 
         with tf.name_scope("conv-song2"):
             # convolution architecture for second song ('cover song')
             conv1b = conv(self, x=song2, kx=3, ky=3, in_depth=1, num_filters=128, name=conv1b)
-            conv1b = pool(self, conv1b, kx=2, ky=4, name=pool1b)
+            conv1b = pool(self, conv1b, kx=2, ky=4, name='pool1b')
             # conv2b
             conv2b = conv(self, x=x, kx=3, ky=3, in_depth=128, num_filters=384, name=conv2b)
             conv2b = pool(self, conv2b, kx=3, ky=5, name=pool2b)
