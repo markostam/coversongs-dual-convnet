@@ -14,21 +14,23 @@ def txt_to_cliques(shs_loc):
 	shs = list(open(shs_loc))
 	shs = shs[14:]
 	cliques = {}
-	tempKey = None
 	for ent in shs:
 		ent = ent.replace('\n','')
 		if ent[0] == '%':
-			if tempKey:
-				yield cliques[tempKey]
 			tempKey = ent.lower()
+			cliques[tempKey] = []
 		else:
 			cliques[tempKey].append(ent.split("<SEP>")[0]+'.mp3')
+	return cliques
 
 def feature_extract(song_loc)
-	#...
+	y, sr = librosa.load(song_loc)
+	C = librosa.cqt(y=y, sr=sr, hop_length=512, fmin=None, 
+					n_bins=84, bins_per_octave=12, tuning=None,
+					filter_scale=1, norm=1, sparsity=0.01, real=None)
 	return song_features
 
-def get_labels(cliques)
+def get_labels(cliques):
 	# get and flatten all combination of coversongs
 	positive_examples = (list(itertools.combinations(val,2)) for key,val in cliques.items())
 	positive_examples = [i for j in positive_examples for i in j]
@@ -60,4 +62,3 @@ def batch_iter(data, batch_size, num_epochs, shuffle=True):
             start_index = batch_num * batch_size
             end_index = min((batch_num + 1) * batch_size, data_size)
             yield shuffled_data[start_index:end_index]
-
