@@ -23,12 +23,20 @@ def txt_to_cliques(shs_loc):
 			cliques[tempKey].append(ent.split("<SEP>")[0]+'.mp3')
 	return cliques
 
-def feature_extract(song_loc)
+def feature_extract(songfile_name):
+	'''
+	extracts features from song given a song file name
+	**assumes working directory contains raw song files**
+	returns a tuple containing songfile name and numpy array of song features
+	'''
+	song_loc = os.path.abspath(songfile_name)
 	y, sr = librosa.load(song_loc)
 	C = librosa.cqt(y=y, sr=sr, hop_length=512, fmin=None, 
 					n_bins=84, bins_per_octave=12, tuning=None,
 					filter_scale=1, norm=1, sparsity=0.01, real=None)
-	return song_features
+	return songfile_name, C
+
+
 
 def get_labels(cliques):
 	# get and flatten all combination of coversongs
