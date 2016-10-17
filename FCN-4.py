@@ -22,24 +22,31 @@ class AudioCNN(object):
             '''
             return tf.get_variable(name, shape, initializer=tf.random_normal_initializer())
 
-        def conv(self, kx, ky, sx, sy, input, in_depth, num_filters, name=None):
+        # def conv2d(x, W, b, strides=1):
+        #     # Conv2D wrapper, with bias and relu activation
+        #     x = tf.nn.conv2d(x, W, strides=[1, strides, strides, 1], padding='SAME')
+        #     x = tf.nn.bias_add(x, b)
+        #     return tf.nn.relu(x)
+
+        def conv(self, x, kx, ky, sx, sy, in_depth, num_filters, name=None):
             '''
             Function that defines a convolutional layer
             -------------------------------------------
-            kx,ky       : kernel dimensions
+            x           : input tensor
+            kx,ky       : filter (kernel) dimensions
             sx,sy       : stride dimensions
-            input       : input tensor
             in_depth    : depth of input tensor
             num_filters : number of conv filters
             '''
+            name = name or self.get_unique_name("conv")
             with tf.variable_scope(name) as scope:
                 kernel = self.create_variable("weights", [kx, ky, in_depth, num_filters])
                 bias = self.create_variable("bias", [num_filters])
                 conv = tf.nn.relu(tf.nn.bias_add(
-                       tf.nn.conv2d(input, kernel, strides=[1, sx, sy, 1], padding='SAME'), bias),
+                       tf.nn.conv2d(x, kernel, strides=[1, sx, sy, 1], padding='SAME'), bias),
                                     name=scope.name)
-                self.add_layer(name, conv)
-            return self
+                #self.add_layer(name, conv)
+            return conv
 
         def pool(self, kx, ky, sx=1, sy=1, name=None):
             name = name or self.get_unique_name("pool")
