@@ -1,14 +1,15 @@
 import numpy as np
 import librosa
 import os
+import pickle
 
 def feature_extract(songfile_name):
 	'''
-	extracts features from song given a song file name
+	takes: filename
+	outputs: audio feature representation from that file (currently cqt)
 	**assumes working directory contains raw song files**
 	returns a tuple containing songfile name and numpy array of song features
 	'''
-	#print(songfile_name)
 	song_loc = os.path.abspath(songfile_name)
 	y, sr = librosa.load(song_loc)
 	desire_spect_len = 2580
@@ -23,23 +24,30 @@ def feature_extract(songfile_name):
 	return songfile_name, C
 
 def create_feature_matrix(song_folder):
+	'''
+	takes: song folder filled with mp3 files as input
+	outputs: key-value pairs of filenames : feature representations (spectrograms)	
+		 list of filenames that caused exceptions 
+	'''
 	feature_matrix = {}
 	exceptions = []
 	for filename in os.listdir(song_folder):
 		if filename.endswith(".mp3"):
 			try:
+				print("Processing: ", filename, end="\r")
 				name, features = feature_extract(filename)
 				feature_matrix[name] = features
 			except:
+				print("Exception on: ", filename)
 				exceptions.append(filename)
 	return feature_matrix, exceptions
 
 def save_feature_matrix(song_folder,save_path):
-	fm = create_feature_matrix(song_folder)
+	fm,excepts = create_feature_matrix(song_folder)
 	fileHandle = open(save_path, "wb")
 	pickle.dump(fm, fileHandle)
 
 song_folder = '/scratch/mss460/shs/shs_train'
-save_path = '/scratch/mss460/shs/training_set_cqt.pickle'
+save_path = '/home/mss460/training_set_cqt.pickle'
 save_feature_matrix(song_folder,save_path)
 
