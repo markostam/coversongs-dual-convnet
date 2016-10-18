@@ -4,6 +4,7 @@ import itertools
 from collections import Counter, OrderedDict
 import librosa
 import random
+import pickle
 
 def txt_to_cliques(shs_loc):
 	'''
@@ -29,21 +30,59 @@ def feature_extract(songfile_name):
 	**assumes working directory contains raw song files**
 	returns a tuple containing songfile name and numpy array of song features
 	'''
+	#print(songfile_name)
 	song_loc = os.path.abspath(songfile_name)
 	y, sr = librosa.load(song_loc)
+	desire_spect_len = 2580
 	C = librosa.cqt(y=y, sr=sr, hop_length=512, fmin=None, 
 					n_bins=84, bins_per_octave=12, tuning=None,
-					filter_scale=1, norm=1, sparsity=0.01, real=None)
+					filter_scale=1, norm=1, sparsity=0.01, real=False)
+	# if spectral respresentation too long, crop it, otherwise, zero-pad
+	if C.shape[1] >= desire_spect_len:
+		C = C[:,0:desire_spect_len]
+	else:
+		C = np.pad(C,((0,0),(0,desire_spect_len-a.shape[1])), 'constant')
 	return songfile_name, C
 
-def create_and_save_feature_matrix(song_folder):
+def create_feature_matrix(song_folder):
 	feature_matrix = {}
+	exceptions = []
 	for filename in os.listdir(song_folder):
 		if filename.endswith(".mp3"):
-			name, features = feature_extract(filename)
-			feature_matrix[name] = features
-	return feature_matrix
+			try:
+				name, features = feature_extract(filename)
+				feature_matrix[name] = features
+			except:
+				exceptions.append(filename)
+	return feature_matrix, exceptions
 
+
+song_folder = '/Volumes/Amelia_Red_2TB 1/shs/shs_train'
+
+def create_feature_matrix_spark(song_folder):
+	# cqt wrapper
+	def cqt(y,sr):
+		return librosa.cqt(y=y, sr=sr, hop_length=512, fmin=None, 
+					n_bins=84, bins_per_octave=12, tuning=None,
+					filter_scale=1, norm=1, sparsity=0.01, real=True)
+	# padding wrapper
+	def padding(C,desired_spect_len):
+		if C.shape[1] >= desired_spect_len:
+			C = C[:,0:desired_spect_len]
+		else:
+			C = np.pad(C,((0,0),(0,desired_spect_len-C.shape[1])), 'constant')
+		return C
+	# transormations
+	filesRDD = sc.parallelize([os.path.join(song_folder,filename) for filename in os.listdir(song_folder) if filename.endswith(".mp3")])
+	rawAudioRDD = filesRDD.map(lambda x: (os.path.basename(x),librosa.load(x)))
+	rawCQT = rawAudioRDD.map(lambda x: (x[0], cqt(x[1][0],x[1][1])))
+	paddedCQT = rawCQT.map(lambda x: (x[0],padding(x[1],2580)))
+	return paddedCQT.collect()
+
+def save_feature_matrix(song_folder):
+	fm = create_feature_matrix(song_folder)
+	fileHandle = open('/Volumes/Amelia_Red_2TB 1/shs/training_set_cqt.p', "wb")
+	pickle.dump(fm, fileHandle)
 
 def get_labels(cliques):
 	# get and flatten all combination of coversongs
