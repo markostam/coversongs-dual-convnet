@@ -1,4 +1,4 @@
-# create root site list to scrape from colin's msd server
+# create root site list to scrape from c's msd server
 # python 3.5
 
 import itertools
