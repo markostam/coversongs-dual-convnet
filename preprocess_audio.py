@@ -73,7 +73,7 @@ def save_feature_matrix(song_folder,save_path):
 pyspark functions 
 '''
 
-def create_feature_matrix_spark(song_folder):
+def create_feature_matrix_spark(song_files):
 	# cqt wrapper
 	def log_cqt(y,sr):
 		C =  librosa.cqt(y=y, sr=sr, hop_length=512, fmin=None, 
@@ -104,18 +104,27 @@ def create_feature_matrix_spark(song_folder):
 		except:
 			pass
 	# transormations
-	filesRDD = sc.parallelize([os.path.join(song_folder,filename) for filename in os.listdir(song_folder) if filename.endswith(".mp3")])
+	filesRDD = sc.parallelize(song_files)
 	rawAudioRDD = filesRDD.map(lambda x: (os.path.basename(x),try_load(x))).filter(lambda x: x[1] != None)
 	rawCQT = rawAudioRDD.map(lambda x: (x[0], log_cqt(x[1][0],x[1][1])))
 	paddedCQT = rawCQT.map(lambda x: (x[0],padding(x[1],2580)))
 	return paddedCQT.collect()
 
-def save_feature_matrix_spark(song_folder,save_path):
-	fm,excepts = create_feature_matrix_spark(song_folder)
+def save_feature_matrix_spark(song_files,save_path,save_name):
+	fm = create_feature_matrix_spark(song_files)
 	fm = {i[0]:i[1] for i in fm}
-	fileHandle = gzip.open(save_path, "wb")
+	fileHandle = gzip.open(os.path.join(save_path,save_name), "wb")
 	pickle.dump(fm, fileHandle)
 	fileHandle.close()
+
+def process_chunks(song_folder, save_path, num_chunks):
+    """Yield successive n-sized chunks from files."""
+    files = [os.path.join(song_folder,filename) for filename in os.listdir(song_folder) if filename.endswith(".mp3")]
+    chunk_size = int(len(files)/num_chunks)
+    j=0
+    for i in range(0, len(files), chunk_size):
+    	j+=1
+        save_feature_matrix_spark(files[i:i + chunk_size],save_path,'training_set_cqt{}.pickle'.format(j))
 
 # cluster
 song_folder = '/scratch/mss460/shs/shs_train'
@@ -124,5 +133,5 @@ save_path = '/home/mss460/training_set_cqt.pickle'
 hadoop_song_folder = '/user/mss460/shs/shs_train'
 
 # local
-song_folder = '/Volumes/Amelia_Red_2TB/shs/shs_train'
-save_path = '/Volumes/Amelia_Red_2TB/shs/training_set_cqt.pickle'
+song_folder = '/Users/markostamenovic/Desktop/shs_train'
+save_path = '/Users/markostamenovic/Desktop/shs_train_pickles'

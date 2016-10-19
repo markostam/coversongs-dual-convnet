@@ -1,6 +1,5 @@
 import numpy as np
 import itertools
-import librosa
 import random
 import pickle
 import os
@@ -22,50 +21,6 @@ def txt_to_cliques(shs_loc):
 		else:
 			cliques[tempKey].append(ent.split("<SEP>")[0]+'.mp3')
 	return cliques
-
-def feature_extract(songfile_name):
-	'''
-	extracts features from song given a song file name
-	**assumes working directory contains raw song files**
-	returns a tuple containing songfile name and numpy array of song features
-	'''
-	#print(songfile_name)
-	song_loc = os.path.abspath(songfile_name)
-	y, sr = librosa.load(song_loc)
-	desire_spect_len = 2580
-	C = librosa.cqt(y=y, sr=sr, hop_length=512, fmin=None, 
-					n_bins=84, bins_per_octave=12, tuning=None,
-					filter_scale=1, norm=1, sparsity=0.01, real=True)
-	# get power spectrogram
-	C = librosa.logamplitude(C**2)
-	# if spectral respresentation too long, crop it, otherwise, zero-pad
-	if C.shape[1] >= desire_spect_len:
-		C = C[:,0:desire_spect_len]
-	else:
-		C = np.pad(C,((0,0),(0,desire_spect_len-C.shape[1])), 'constant')
-	return songfile_name, C
-
-def create_feature_matrix(song_folder):
-	feature_matrix = {}
-	exceptions = []
-	for filename in os.listdir(song_folder):
-		if filename.endswith(".mp3"):
-			try:
-				name, features = feature_extract(filename)
-				feature_matrix[name] = features
-			except:
-				exceptions.append(filename)
-	return feature_matrix, exceptions
-
-song_folder = '/scratch/mss460/shs/shs_train'
-#hadoop song folder
-hadoop_song_folder = '/user/mss460/shs/shs_train'
-song_folder = '/Volumes/Amelia_Red_2TB/shs/shs_train'
-
-def save_feature_matrix(song_folder):
-	fm = create_feature_matrix(song_folder)
-	fileHandle = open('/Volumes/Amelia_Red_2TB 1/shs/training_set_cqt.p', "wb")
-	pickle.dump(fm, fileHandle)
 
 def get_labels(cliques):
 	# get and flatten all combination of coversongs

@@ -3,7 +3,7 @@ import numpy as np
 
 class AudioCNN(object):
     """
-    A CNN for coversong identification.
+    A CNN for coversong identification. Pipelines based on FCN-4 from Choi et. al. 2016 https://arxiv.org/abs/1606.00298 
     Uses two pipelines of four convolutional layers & max-pooling layers followed by one softmax layer.
     """
     def __init__(
