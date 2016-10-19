@@ -1,10 +1,9 @@
 import numpy as np
-import re
 import itertools
-from collections import Counter, OrderedDict
 import librosa
 import random
 import pickle
+import os
 
 def txt_to_cliques(shs_loc):
 	'''
@@ -36,12 +35,14 @@ def feature_extract(songfile_name):
 	desire_spect_len = 2580
 	C = librosa.cqt(y=y, sr=sr, hop_length=512, fmin=None, 
 					n_bins=84, bins_per_octave=12, tuning=None,
-					filter_scale=1, norm=1, sparsity=0.01, real=False)
+					filter_scale=1, norm=1, sparsity=0.01, real=True)
+	# get power spectrogram
+	C = librosa.logamplitude(C**2)
 	# if spectral respresentation too long, crop it, otherwise, zero-pad
 	if C.shape[1] >= desire_spect_len:
 		C = C[:,0:desire_spect_len]
 	else:
-		C = np.pad(C,((0,0),(0,desire_spect_len-a.shape[1])), 'constant')
+		C = np.pad(C,((0,0),(0,desire_spect_len-C.shape[1])), 'constant')
 	return songfile_name, C
 
 def create_feature_matrix(song_folder):
@@ -56,28 +57,10 @@ def create_feature_matrix(song_folder):
 				exceptions.append(filename)
 	return feature_matrix, exceptions
 
-
-song_folder = '/Volumes/Amelia_Red_2TB 1/shs/shs_train'
-
-def create_feature_matrix_spark(song_folder):
-	# cqt wrapper
-	def cqt(y,sr):
-		return librosa.cqt(y=y, sr=sr, hop_length=512, fmin=None, 
-					n_bins=84, bins_per_octave=12, tuning=None,
-					filter_scale=1, norm=1, sparsity=0.01, real=True)
-	# padding wrapper
-	def padding(C,desired_spect_len):
-		if C.shape[1] >= desired_spect_len:
-			C = C[:,0:desired_spect_len]
-		else:
-			C = np.pad(C,((0,0),(0,desired_spect_len-C.shape[1])), 'constant')
-		return C
-	# transormations
-	filesRDD = sc.parallelize([os.path.join(song_folder,filename) for filename in os.listdir(song_folder) if filename.endswith(".mp3")])
-	rawAudioRDD = filesRDD.map(lambda x: (os.path.basename(x),librosa.load(x)))
-	rawCQT = rawAudioRDD.map(lambda x: (x[0], cqt(x[1][0],x[1][1])))
-	paddedCQT = rawCQT.map(lambda x: (x[0],padding(x[1],2580)))
-	return paddedCQT.collect()
+song_folder = '/scratch/mss460/shs/shs_train'
+#hadoop song folder
+hadoop_song_folder = '/user/mss460/shs/shs_train'
+song_folder = '/Volumes/Amelia_Red_2TB/shs/shs_train'
 
 def save_feature_matrix(song_folder):
 	fm = create_feature_matrix(song_folder)
