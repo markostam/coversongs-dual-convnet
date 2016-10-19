@@ -3,4 +3,5 @@
 # submit with: qsub -l nodes=1:ppn=3,mem=24GB,walltime=48:00:00 /home/mss460/coversongs-tensorflow/process_audiodata_qsub
 
 module load python3/intel/3.5.1
+module load ffmpeg
 python3 /home/mss460/coversongs-tensorflow/process_audiodata.py
