@@ -116,9 +116,8 @@ return paddedCQT.collect()
 def save_feature_matrix_spark(song_files,save_path,save_name):
 	fm = create_feature_matrix_spark(song_files)
 	fm = {i[0]:i[1] for i in fm}
-	fileHandle = gzip.open(os.path.join(save_path,save_name), "wb")
-	pickle.dump(fm, fileHandle)
-	fileHandle.close()
+	with gzip.open(os.path.join(save_path,save_name), "wb") as fileHandle:
+		pickle.dump(fm, fileHandle)
 
 def process_chunks(song_folder, save_path, num_chunks):
     '''
@@ -130,7 +129,7 @@ def process_chunks(song_folder, save_path, num_chunks):
     j=0
     for i in range(0, len(files), chunk_size):
     	j+=1
-        save_feature_matrix_spark(files[i:i + chunk_size],save_path,'training_set_cqt{}.pickle'.format(j))
+        save_feature_matrix_spark(files[i:i + chunk_size],save_path,'training_set_cqt{}.pickle.gz'.format(j))
 
 # cluster
 song_folder = '/scratch/mss460/shs/shs_train'
