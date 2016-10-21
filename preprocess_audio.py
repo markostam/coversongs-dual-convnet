@@ -4,7 +4,7 @@ import os
 import pickle
 import gzip
 import sys
-# ignore deprecation warnings caused by librosa cqt
+# ignore deprecation warnings caused by librosa 0.4.3 cqt with numpy
 import warnings 
 warnings.filterwarnings("ignore")
 
@@ -78,19 +78,19 @@ pyspark functions
 
 def create_feature_matrix_spark(song_files):
 	# cqt wrapper
-def log_cqt(y,sr):
-	C =  librosa.cqt(y=y, sr=sr, hop_length=512, fmin=None, 
-	n_bins=84, bins_per_octave=12, tuning=None,
-	filter_scale=1, norm=1, sparsity=0.01, real=True)
-	# get log-power spectrogram with noise floor of -80dB
-	C = librosa.logamplitude(C**2)
-	# scale log-power spectrogram to positive integer value for smaller footpint
-	noise_floor_db = 80
-	scaling_factor = (2**16 - 1)/noise_floor_db
-	C += noise_floor_db
-	C *= scaling_factor
-	C = C.astype('uint16')
-	return C
+	def log_cqt(y,sr):
+		C =  librosa.cqt(y=y, sr=sr, hop_length=512, fmin=None, 
+		n_bins=84, bins_per_octave=12, tuning=None,
+		filter_scale=1, norm=1, sparsity=0.01, real=True)
+		# get log-power spectrogram with noise floor of -80dB
+		C = librosa.logamplitude(C**2)
+		# scale log-power spectrogram to positive integer value for smaller footpint
+		noise_floor_db = 80
+		scaling_factor = (2**16 - 1)/noise_floor_db
+		C += noise_floor_db
+		C *= scaling_factor
+		C = C.astype('uint16')
+		return C
 	# padding wrapper
 	def padding(C,desired_spect_len):
 		if C.shape[1] >= desired_spect_len:
@@ -106,12 +106,12 @@ def log_cqt(y,sr):
 			return librosa.load(filename)
 		except:
 			pass
-# transormations
-filesRDD = sc.parallelize(song_files)
-rawAudioRDD = filesRDD.map(lambda x: (os.path.basename(x),try_load(x))).filter(lambda x: x[1] != None)
-rawCQT = rawAudioRDD.map(lambda x: (x[int(0)], log_cqt(x[int(1)][int(0)],x[int(1)][int(1)])))
-paddedCQT = rawCQT.map(lambda x: (x[0],padding(x[1],2580)))
-return paddedCQT.collect()
+	# transormations
+	filesRDD = sc.parallelize(song_files)
+	rawAudioRDD = filesRDD.map(lambda x: (os.path.basename(x),try_load(x))).filter(lambda x: x[1] != None)
+	rawCQT = rawAudioRDD.map(lambda x: (x[int(0)], log_cqt(x[int(1)][int(0)],x[int(1)][int(1)])))
+	paddedCQT = rawCQT.map(lambda x: (x[0],padding(x[1],2580)))
+	return paddedCQT.collect()
 
 def save_feature_matrix_spark(song_files,save_path,save_name):
 	fm = create_feature_matrix_spark(song_files)
@@ -119,7 +119,7 @@ def save_feature_matrix_spark(song_files,save_path,save_name):
 	with gzip.open(os.path.join(save_path,save_name), "wb") as fileHandle:
 		pickle.dump(fm, fileHandle)
 
-def process_chunks(song_folder, save_path, num_chunks):
+def process_chunks(song_folder, save_path, num_chunks, train_or_test="train"):
     '''
     chunk feature matrix creation to deal with memory constraints
     will split the output files in to num_chunks chunks
@@ -129,7 +129,7 @@ def process_chunks(song_folder, save_path, num_chunks):
     j=0
     for i in range(0, len(files), chunk_size):
     	j+=1
-        save_feature_matrix_spark(files[i:i + chunk_size],save_path,'training_set_cqt{}.pickle.gz'.format(j))
+        save_feature_matrix_spark(files[i:i + chunk_size],save_path,'{}_set_cqt{}.pickle.gz'.format(train_or_test,j))
 
 # cluster
 song_folder = '/scratch/mss460/shs/shs_train'
