@@ -1,13 +1,9 @@
-#!/usr/bin/env python3.5
-# -*- coding: utf-8 -*-
-
 import numpy as np
 import itertools
 import random
 import gzip
 import pickle
 import os
-import pdb
 
 def txt_to_cliques(shs_loc):
 	'''
@@ -15,7 +11,7 @@ def txt_to_cliques(shs_loc):
 	or groups of cover songs and returns the dict of cliques
 	based on their msd id
 	'''
-	shs = list(open(shs_loc, encoding='utf-8'))
+	shs = list(open(shs_loc, encoding = 'utf-8'))
 	shs = shs[14:]
 	cliques = {}
 	for ent in shs:
@@ -80,11 +76,11 @@ def prune_cliques(cliques,spect_dict):
 	scraping errors, filesize=0, etc...
 	'''
 	pruned_cliques={}
-	for clique_key, clique_val in cliques.items():
-		pruned_cliques[clique_key] = clique_val
-		for songid in clique_val:
-			if songid not in spect_dict.keys():
-				pruned_cliques[clique_key].remove(songid)
-		if len(pruned_cliques[clique_key]) < 2:
-			del pruned_cliques[clique_key]
-	return pruned_cliques
+    for clique_key, clique_val in cliques.items():
+        pruned_cliques[clique_key]=[]
+        for songid in clique_val:
+            if songid in spect_dict.keys():
+                pruned_cliques[clique_key].append(songid)
+        if len(pruned_cliques[clique_key]) < 2:
+            del pruned_cliques[clique_key]
+    return pruned_cliques
