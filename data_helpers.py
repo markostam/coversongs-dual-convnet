@@ -1,9 +1,13 @@
+#!/usr/bin/env python3.5
+# -*- coding: utf-8 -*-
+
 import numpy as np
 import itertools
 import random
 import gzip
 import pickle
 import os
+import pdb
 
 def txt_to_cliques(shs_loc):
 	'''
@@ -11,7 +15,7 @@ def txt_to_cliques(shs_loc):
 	or groups of cover songs and returns the dict of cliques
 	based on their msd id
 	'''
-	shs = list(open(shs_loc))
+	shs = list(open(shs_loc, encoding='utf-8'))
 	shs = shs[14:]
 	cliques = {}
 	for ent in shs:

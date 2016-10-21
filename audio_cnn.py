@@ -59,7 +59,7 @@ class AudioCNN(object):
         l2_loss = tf.constant(0.0)
         
         #def conv_architecture(song,name_scope):
-        with tf.name_scope("conv-song1"):
+        with tf.name_scope("conv-song1"), tf.device('/gpu:0'):
             # convolutional architecture for first song ('original song')
             conv1a = conv(self, x=tf.expand_dims(self.input_song1,-1), kx=3, ky=3, in_depth=1, num_filters=128, name='conv1a')
             conv1a = pool(self, conv1a, kx=2, ky=4, name='pool1a')
@@ -74,7 +74,7 @@ class AudioCNN(object):
             conv4a = pool(self, conv4a, kx=5, ky=17, name='pool4a')
             self.song1_out = tf.reshape(conv4a, [-1, 2048])
 
-        with tf.name_scope("conv-song2"):
+        with tf.name_scope("conv-song2"), tf.device('/gpu:1'):
             # convolution architecture for second song ('cover song')
             conv1b = conv(self, x=tf.expand_dims(self.input_song2,-1), kx=3, ky=3, in_depth=1, num_filters=128, name='conv1b')
             conv1b = pool(self, conv1b, kx=2, ky=4, name='pool1b')
@@ -97,7 +97,7 @@ class AudioCNN(object):
         drop = tf.nn.dropout(self.songs_vector, self.dropout_keep_prob)
 
         # Final (unnormalized) scores and predictions
-        with tf.name_scope("output"):
+        with tf.name_scope("output"), tf.device('/gpu:2'):
             W = tf.get_variable(
                 "W",
                 shape=[4096, num_classes],
@@ -109,12 +109,12 @@ class AudioCNN(object):
             self.predictions = tf.argmax(self.scores, 1, name="predictions")
 
         # Calculate Mean cross-entropy loss
-        with tf.name_scope("loss"):
+        with tf.name_scope("loss"), tf.device('/gpu:3'):
             losses = tf.nn.softmax_cross_entropy_with_logits(self.scores, self.input_y)
             self.loss = tf.reduce_mean(losses) + l2_reg_lambda * l2_loss
 
         # Accuracy
-        with tf.name_scope("accuracy"):
+        with tf.name_scope("accuracy"), tf.device('/gpu:3'):
             correct_predictions = tf.equal(self.predictions, tf.argmax(self.input_y, 1))
             self.accuracy = tf.reduce_mean(tf.cast(correct_predictions, "float"), name="accuracy")
               
