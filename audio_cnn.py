@@ -12,8 +12,8 @@ class AudioCNN(object):
       fc_layers=1, l2_reg_lambda=0.0):
 
         # Placeholders for input, output and dropout
-        self.input_song1 = tf.placeholder(tf.float32, [None, *spect_dim, 1], name="input_song1")
-        self.input_song2 = tf.placeholder(tf.float32, [None, *spect_dim, 1], name="input_song2")
+        self.input_song1 = tf.placeholder(tf.float32, [None, *spect_dim], name="input_song1")
+        self.input_song2 = tf.placeholder(tf.float32, [None, *spect_dim], name="input_song2")
         self.input_y = tf.placeholder(tf.float32, [None, num_classes], name="input_y")
 
         # create wrappers for basic convnet functions
@@ -61,7 +61,7 @@ class AudioCNN(object):
         #def conv_architecture(song,name_scope):
         with tf.name_scope("conv-song1"):
             # convolutional architecture for first song ('original song')
-            conv1a = conv(self, x=self.input_song1, kx=3, ky=3, in_depth=1, num_filters=128, name='conv1a')
+            conv1a = conv(self, x=tf.expand_dims(self.input_song1,-1), kx=3, ky=3, in_depth=1, num_filters=128, name='conv1a')
             conv1a = pool(self, conv1a, kx=2, ky=4, name='pool1a')
             # conv2a
             conv2a = conv(self, x=conv1a, kx=3, ky=3, in_depth=128, num_filters=384, name='conv2a')
@@ -76,7 +76,7 @@ class AudioCNN(object):
 
         with tf.name_scope("conv-song2"):
             # convolution architecture for second song ('cover song')
-            conv1b = conv(self, x=self.input_song2, kx=3, ky=3, in_depth=1, num_filters=128, name='conv1b')
+            conv1b = conv(self, x=tf.expand_dims(self.input_song2,-1), kx=3, ky=3, in_depth=1, num_filters=128, name='conv1b')
             conv1b = pool(self, conv1b, kx=2, ky=4, name='pool1b')
             # conv2b
             conv2b = conv(self, x=conv1b, kx=3, ky=3, in_depth=128, num_filters=384, name='conv2b')
