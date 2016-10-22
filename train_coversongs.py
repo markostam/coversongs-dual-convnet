@@ -133,9 +133,9 @@ with tf.Graph().as_default():
         sess.run(tf.initialize_all_variables())
 
         def train_step(x_batch, y_batch, ):
-            """
+            '''
             A single training step
-            """
+            '''
             train_stats = StatisticsCollector()
 
             feed_dict = {
@@ -155,9 +155,13 @@ with tf.Graph().as_default():
             train_summary_writer.add_summary(summaries, step)
 
         def dev_step(x_dev, y_dev, writer=None):
-            """
-            Evaluates model on a dev set
-            """
+            '''
+            Evaluates model on full dev set.
+            --------------------------------
+            Since full dev set likely won't fit into memory, this function
+            splits the dev set into minibatches and returns the average 
+            of loss and accuracy to cmd line and to summary writer
+            '''
             dev_stats = StatisticsCollector()
 
             dev_batches = data_helpers.batch_iter(list(zip(x_dev, y_dev)), 
@@ -184,7 +188,7 @@ with tf.Graph().as_default():
             if writer:
                 writer.add_summary(summaries, step)
 
-        # Generate batches
+        # Generate training batches
         batches = data_helpers.batch_iter(
             list(zip(x_train, y_train)), FLAGS.batch_size, FLAGS.num_epochs)
 
