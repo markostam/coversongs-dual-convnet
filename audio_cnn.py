@@ -5,7 +5,7 @@ import pdb
 class AudioCNN(object):
     """
     A CNN for coversong identification. Pipelines based on FCN-4 from Choi et. al. 2016 https://arxiv.org/abs/1606.00298 
-    Uses two pipelines of four convolutional layers & max-pooling layers followed by one softmax layer.
+    Uses two pipelines of four convolutional layers & max-pooling layers followed tied together by a binary softmax layer.
     """
     def __init__(
       self, spect_dim, num_classes,
