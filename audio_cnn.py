@@ -9,7 +9,7 @@ class AudioCNN(object):
     """
     def __init__(
       self, spect_dim, num_classes,
-      fc_layers=1, l2_reg_lambda=0.0):
+      l2_reg_lambda=0.0):
 
         # Placeholders for input, output and dropout
         self.input_song1 = tf.placeholder(tf.float32, [None, *spect_dim], name="input_song1")
