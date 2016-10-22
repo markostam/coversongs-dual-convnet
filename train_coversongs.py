@@ -26,6 +26,7 @@ tf.flags.DEFINE_float("learning_rate", .0005, "Gradient descent learning rate (d
 #tf.flags.DEFINE_float("fc_layers", 1, "number of fully connected layers at output (1 or 2) (default: 1)")
 #tf.flags.DEFINE_string("activation_func", 'relu', "activation function (can be: tanh or relu) (default: relu)")
 tf.flags.DEFINE_float("l2_constraint", None, "Constraint on l2 norms of weight vectors (default: None)")
+tf.flags.DEFINE_float("dev_size_percent", 0.10, "size of the dev batch in percent vs entire train set (default: 0.10)")
 
 # Training parameters
 tf.flags.DEFINE_integer("batch_size", 32, "Batch Size (default: 32)")
@@ -69,7 +70,7 @@ y_shuffled = y[shuffle_indices]
 
 # Split train/test set
 # TODO: This is very crude, should use cross-validation
-dev_len = round(len(y)*.10)
+dev_len = round(len(y)*FLAGS.dev_size_percent)
 x_train, x_dev = x_shuffled[:-dev_len], x_shuffled[-dev_len:]
 y_train, y_dev = y_shuffled[:-dev_len], y_shuffled[-dev_len:]
 print("Dataset Size: {:d}".format(len(y)))
@@ -162,6 +163,7 @@ with tf.Graph().as_default():
 
             dev_batches = data_helpers.batch_iter(list(zip(x_dev, y_dev)), 
                                       FLAGS.batch_size, 1)
+            pdb.set_trace()
             for dev_batch in dev_batches:
                 x_dev_batch, y_dev_batch = zip(*dev_batch)
                 feed_dict = {
