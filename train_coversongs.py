@@ -36,7 +36,6 @@ tf.flags.DEFINE_integer("checkpoint_every", 800, "Save model after this many ste
 # Misc Parameters
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
-#tf.flags.DEFINE_integer("num_threads", 8, "Number of threads to use for computation (default = 8)")
 
 FLAGS = tf.flags.FLAGS
 FLAGS._parse_flags()
@@ -163,21 +162,21 @@ with tf.Graph().as_default():
 
             dev_batches = data_helpers.batch_iter(list(zip(x_dev, y_dev)), 
                                       FLAGS.batch_size, 1)
-            pdb.set_trace()
             for dev_batch in dev_batches:
-                x_dev_batch, y_dev_batch = zip(*dev_batch)
-                feed_dict = {
-                  cnn.input_song1: tuple(spect_dict[i[0]] for i in x_dev_batch),
-                  cnn.input_song2: tuple(spect_dict[i[1]] for i in x_dev_batch),
-                  cnn.input_y: y_dev_batch,
-                  cnn.dropout_keep_prob: 1.0
-                }
+                if len(dev_batch) > 0:
+                    x_dev_batch, y_dev_batch = zip(*dev_batch)
+                    feed_dict = {
+                      cnn.input_song1: tuple(spect_dict[i[0]] for i in x_dev_batch),
+                      cnn.input_song2: tuple(spect_dict[i[1]] for i in x_dev_batch),
+                      cnn.input_y: y_dev_batch,
+                      cnn.dropout_keep_prob: 1.0
+                    }
 
-                step, loss, accuracy = sess.run(
-                    [global_step, cnn.loss, cnn.accuracy],
-                    feed_dict)
+                    step, loss, accuracy = sess.run(
+                        [global_step, cnn.loss, cnn.accuracy],
+                        feed_dict)
 
-                dev_stats.collect(accuracy, loss)
+                    dev_stats.collect(accuracy, loss)
 
             time_str = datetime.datetime.now().isoformat()
             batch_accuracy, batch_loss, summaries = dev_stats.report()
