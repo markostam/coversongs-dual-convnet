@@ -26,7 +26,7 @@ tf.flags.DEFINE_float("learning_rate", .0005, "Gradient descent learning rate (d
 #tf.flags.DEFINE_float("fc_layers", 1, "number of fully connected layers at output (1 or 2) (default: 1)")
 #tf.flags.DEFINE_string("activation_func", 'relu', "activation function (can be: tanh or relu) (default: relu)")
 tf.flags.DEFINE_float("l2_constraint", None, "Constraint on l2 norms of weight vectors (default: None)")
-tf.flags.DEFINE_float("dev_size_percent", 0.10, "size of the dev batch in percent vs entire train set (default: 0.10)")
+tf.flags.DEFINE_float("dev_size", 0.20, "size of the dev batch in percent vs entire train set (default: 0.20)")
 
 # Training parameters
 tf.flags.DEFINE_integer("batch_size", 32, "Batch Size (default: 32)")
@@ -191,7 +191,10 @@ with tf.Graph().as_default():
         # Generate training batches
         batches = data_helpers.batch_iter(
             list(zip(x_train, y_train)), FLAGS.batch_size, FLAGS.num_epochs)
-
+        print("\nEvaluation:")
+        # send entire dev set to dev_step each eval and split into minibatches there
+        dev_step(x_dev, y_dev, writer=dev_summary_writer)
+        print("")
         # Training loop. For each batch...
         for batch in batches:
             x_batch, y_batch = zip(*batch)
