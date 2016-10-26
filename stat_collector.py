@@ -2,14 +2,14 @@ import tensorflow as tf
 
 class StatisticsCollector(object):
     '''
-    object based on: https://github.com/brilee/MuGo/blob/master/policy.py#L174
-    _______________________________________________________________
     Accuracy and cost cannot be calculated with the full test dataset
     in one pass, so they must be computed in batches. Unfortunately,
     the built-in TF summary nodes cannot be told to aggregate multiple
     executions. Therefore, we aggregate the accuracy/cost ourselves at
     the python level, and push it through the accuracy/cost summary
     nodes to generate the appropriate summary protobufs for writing.
+    -------------------------------------------------------------------
+    based on: https://github.com/brilee/MuGo/blob/master/policy.py#L174
     '''
     with tf.device("/cpu:0"):
         accuracy = tf.placeholder(tf.float32, [])
