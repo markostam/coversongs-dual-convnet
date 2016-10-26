@@ -17,11 +17,11 @@ class AudioCNN(object):
         self.input_y = tf.placeholder(tf.float32, [None, num_classes], name="input_y")
 
         # create wrappers for basic convnet functions
-        def create_variable(self, name, shape):
+        def create_variable(self, name, shape, initializer = tf.random_normal_initializer()):
             '''
             Function wrapper for creating a layer with random initializer
             '''
-            return tf.get_variable(name, shape, initializer=tf.random_normal_initializer())
+            return tf.get_variable(name, shape, initializer=initializer)
 
         def conv(self, x, kx, ky, in_depth, num_filters, sx=1, sy=1, name=None):
             '''
@@ -34,7 +34,7 @@ class AudioCNN(object):
             num_filters : number of conv filters
             '''
             with tf.variable_scope(name) as scope:
-                kernel = create_variable(self, "weights", [kx, ky, in_depth, num_filters])
+                kernel = create_variable(self, "weights", [kx, ky, in_depth, num_filters], tf.contrib.layers.xavier_initializer_conv2d())
                 bias = create_variable(self, "bias", [num_filters])
                 conv = tf.nn.relu(tf.nn.bias_add(
                        tf.nn.conv2d(x, kernel, strides=[1, sx, sy, 1], padding='SAME'), bias),
@@ -61,33 +61,33 @@ class AudioCNN(object):
         #def conv_architecture(song,name_scope):
         with tf.name_scope("conv-song1"), tf.device('/gpu:0'):
             # convolutional architecture for first song ('original song')
-            conv1a = conv(self, x=tf.expand_dims(self.input_song1,-1), kx=3, ky=3, in_depth=1, num_filters=128, name='conv1a')
+            conv1a = conv(self, x=tf.expand_dims(self.input_song1,-1), kx=3, ky=3, in_depth=1, num_filters=8, name='conv1a')
             conv1a = pool(self, conv1a, kx=2, ky=4, name='pool1a')
             # conv2a
-            conv2a = conv(self, x=conv1a, kx=3, ky=3, in_depth=128, num_filters=384, name='conv2a')
+            conv2a = conv(self, x=conv1a, kx=3, ky=3, in_depth=8, num_filters=8, name='conv2a')
             conv2a = pool(self, conv2a, kx=3, ky=5, name='pool2a')
             # conv3a
-            conv3a = conv(self, x=conv2a, kx=3, ky=3, in_depth=384, num_filters=768, name='conv3a')
+            conv3a = conv(self, x=conv2a, kx=3, ky=3, in_depth=8, num_filters=12, name='conv3a')
             conv3a = pool(self, conv3a, kx=3, ky=8, name='pool3a')
             # conv4a
-            conv4a = conv(self, x=conv3a, kx=3, ky=3, in_depth=768, num_filters=2048, name='conv4a')
+            conv4a = conv(self, x=conv3a, kx=3, ky=3, in_depth=12, num_filters=16, name='conv4a')
             conv4a = pool(self, conv4a, kx=5, ky=8, name='pool4a') # 5,8 for 30 sec; 5,17 for 1min
-            self.song1_out = tf.reshape(conv4a, [-1, 2048])
+            self.song1_out = tf.reshape(conv4a, [-1, 16])
 
         with tf.name_scope("conv-song2"), tf.device('/gpu:1'):
             # convolution architecture for second song ('cover song')
-            conv1b = conv(self, x=tf.expand_dims(self.input_song2,-1), kx=3, ky=3, in_depth=1, num_filters=128, name='conv1b')
+            conv1b = conv(self, x=tf.expand_dims(self.input_song2,-1), kx=3, ky=3, in_depth=1, num_filters=8, name='conv1b')
             conv1b = pool(self, conv1b, kx=2, ky=4, name='pool1b')
             # conv2b
-            conv2b = conv(self, x=conv1b, kx=3, ky=3, in_depth=128, num_filters=384, name='conv2b')
+            conv2b = conv(self, x=conv1b, kx=3, ky=3, in_depth=8, num_filters=8, name='conv2b')
             conv2b = pool(self, conv2b, kx=3, ky=5, name='pool2b')
-            # conv3b
-            conv3b = conv(self, x=conv2b, kx=3, ky=3, in_depth=384, num_filters=768, name='conv3b')
+            # =8
+            conv3b = conv(self, x=conv2b, kx=3, ky=3, in_depth=8, num_filters=12, name='conv3b')
             conv3b = pool(self, conv3b, kx=3, ky=8, name='pool3b')
             # conv4b
-            conv4b = conv(self, x=conv3b, kx=3, ky=3, in_depth=768, num_filters=2048, name='conv4b')
+            conv4b = conv(self, x=conv3b, kx=3, ky=3, in_depth=12, num_filters=16, name='conv4b')
             conv4b = pool(self, conv4b, kx=5, ky=8, name='pool4b') # 5,8 for 30 sec; 5,17 for 1min       
-            self.song2_out = tf.reshape(conv4b, [-1, 2048])
+            self.song2_out = tf.reshape(conv4b, [-1, 16])
 
         # concatenate transformed song vectors
         self.songs_vector = tf.concat(1, [self.song1_out,self.song2_out])
@@ -100,7 +100,7 @@ class AudioCNN(object):
         with tf.name_scope("output"), tf.device('/gpu:2'):
             W = tf.get_variable(
                 "W",
-                shape=[4096, num_classes],
+                shape=[32, num_classes],
                 initializer=tf.contrib.layers.xavier_initializer())
             b = tf.Variable(tf.constant(0.1, shape=[num_classes]), "b")
             l2_loss += tf.nn.l2_loss(W)
