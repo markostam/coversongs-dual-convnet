@@ -22,7 +22,7 @@ tf.flags.DEFINE_string("filters_per_layer", '8,8,12,16', "Number of filters per 
 tf.flags.DEFINE_string("cnn", "mod", "which cnn to use (default: 'reg')")
 tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularizaion lambda (default: 0.0)")
 tf.flags.DEFINE_float("dropout_factor", 1.0, "Probability of weights to keep for dropout (default: 0.5)")
-tf.flags.DEFINE_float("learning_rate", .0005, "Gradient descent learning rate (default: .0005)")
+tf.flags.DEFINE_float("learning_rate", .0001, "Gradient descent learning rate (default: .0005)")
 #tf.flags.DEFINE_float("fc_layers", 1, "number of fully connected layers at output (1 or 2) (default: 1)")
 #tf.flags.DEFINE_string("activation_func", 'relu', "activation function (can be: tanh or relu) (default: relu)")
 tf.flags.DEFINE_float("l2_constraint", None, "Constraint on l2 norms of weight vectors (default: None)")
