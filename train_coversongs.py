@@ -11,7 +11,6 @@ import pickle
 import random
 import pdb
 from stat_collector import StatisticsCollector
-from audio_cnn import AudioCNN
 from tensorflow.contrib import learn
 
 # Parameters
@@ -20,6 +19,7 @@ from tensorflow.contrib import learn
 # Model Hyperparameters
 #tf.flags.DEFINE_string("filter_sizes", "3,4,5", "Comma-separated filter sizes (default: '3,4,5')")
 #tf.flags.DEFINE_integer("num_filters", 64, "Number of filters per filter size (default: 64)")
+tf.flags.DEFINE_string("cnn", "reg", "which cnn to use (default: 'reg')")
 tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularizaion lambda (default: 0.0)")
 tf.flags.DEFINE_float("dropout_factor", 1.0, "Probability of weights to keep for dropout (default: 0.5)")
 tf.flags.DEFINE_float("learning_rate", .0005, "Gradient descent learning rate (default: .0005)")
@@ -46,6 +46,10 @@ for i in flags_list:
     print(i)
 print("")
 
+# choose which cnn to use
+# ==================================================
+cnns = {'reg':'audio_cnn', 'small':'audio_cnn_small', 'mod':'audio_cnn_modular'}
+AudioCNN = getattr(__import__(cnns[FLAGS.cnn], fromlist=['AudioCNN']), 'AudioCNN')
 
 # Data Preparatopn
 # ==================================================
@@ -53,26 +57,27 @@ print("")
 # Load data
 print("Loading data...")
 train_loc = "./shs/shs_dataset_train.txt"
-path_to_pickles = "./shs/shs_train_pickles"
+path_to_pickles = "./shs/shs_train_pick_30sec"
 spect_dict = data_helpers.read_from_pickles(path_to_pickles)
+print("Zero-meaning data...")
+# zero-mean spect-dict
+spect_dict_mean = np.mean(list(spect_dict.values()),0)
+spect_dict = {k: v-spect_dict_mean for k,v in spect_dict.items()}
+# get cliques from dataset textfile
 cliques = data_helpers.txt_to_cliques(train_loc)
+# prune cliques to make sure we're not referencing songs that weren't downloaded
 pruned_cliques = data_helpers.prune_cliques(cliques,spect_dict)
-x, y = data_helpers.get_labels(pruned_cliques)
+# remove any more than 2 songs from each clique
+# binary_cliques = data_helpers.binarize_cliques(pruned_cliques)
+binary_cliques = pruned_cliques
 
-# Randomly shuffle data
-np.random.seed(420)
-shuffle_indices = np.random.permutation(np.arange(len(y)))
-#pdb.set_trace()
-x,y = np.array(x), np.array(y)
-x_shuffled = x[shuffle_indices]
-y_shuffled = y[shuffle_indices]
-
-# Split train/test set
+# split train/dev set so that there are no songs from same clique overlapping sets
 # TODO: This is very crude, should use cross-validation
-dev_len = round(len(y)*FLAGS.dev_size_percent)
-x_train, x_dev = x_shuffled[:-dev_len], x_shuffled[-dev_len:]
-y_train, y_dev = y_shuffled[:-dev_len], y_shuffled[-dev_len:]
-print("Dataset Size: {:d}".format(len(y)))
+train_cliques, dev_cliques = data_helpers.cliques_to_dev_train(binary_cliques,FLAGS.dev_size)
+x_train, y_train = data_helpers.get_labels(train_cliques)
+x_dev, y_dev = data_helpers.get_labels(dev_cliques)
+
+print("Dataset Size: {:d}".format(len(y_dev) + len(y_train)))
 print("Train/Dev split: {:d}/{:d}".format(len(y_train), len(y_dev)))
 
 
@@ -144,9 +149,11 @@ with tf.Graph().as_default():
               cnn.input_y: y_batch,
               cnn.dropout_keep_prob: FLAGS.dropout_factor
             }
+
             _, step, loss, accuracy = sess.run(
                 [train_op, global_step, cnn.loss, cnn.accuracy],
                 feed_dict)
+
             train_stats.collect(accuracy, loss)
 
             time_str = datetime.datetime.now().isoformat()
@@ -179,7 +186,6 @@ with tf.Graph().as_default():
                     step, loss, accuracy = sess.run(
                         [global_step, cnn.loss, cnn.accuracy],
                         feed_dict)
-
                     dev_stats.collect(accuracy, loss)
 
             time_str = datetime.datetime.now().isoformat()
