@@ -4,6 +4,7 @@ import random
 import gzip
 import pickle
 import os
+import pdb
 
 def txt_to_cliques(shs_loc):
     '''
@@ -27,11 +28,15 @@ def get_labels(cliques):
     # get and flatten all combination of coversongs
     positive_examples = (list(itertools.combinations(val,2)) for key,val in cliques.items())
     positive_examples = [i for j in positive_examples for i in j]
+    positives_flipped = [(i[1],i[0]) for i in positive_examples]
+    positive_examples += positives_flipped
     positive_labels = [[1,0] for _ in positive_examples]
     # generate negative examples of an equivalent length to the positive examples list
     song_from_each_clique = (random.choice(val) for key,val in cliques.items())
     negative_examples = itertools.combinations(song_from_each_clique,2)
     negative_examples = list(itertools.islice(negative_examples, len(positive_examples)))
+    negatives_flipped = [(i[1],i[0]) for i in negative_examples]
+    negative_examples += negatives_flipped
     negative_labels = [[0,1] for _ in negative_examples]
 
     x = positive_examples + negative_examples
@@ -63,7 +68,7 @@ def read_from_pickles(path_to_pickles):
     '''
     spect_dict = {}
     for file in os.listdir(path_to_pickles):
-        if file.endswith('.pickle'):
+        if file.endswith('.pickle.gz'):
             with gzip.open(os.path.join(path_to_pickles,file),'rb') as f:
                 temp_dict = pickle.load(f, encoding='latin-1')
             spect_dict.update(temp_dict)
@@ -84,3 +89,34 @@ def prune_cliques(cliques,spect_dict):
         if len(pruned_cliques[clique_key]) < 2:
             del pruned_cliques[clique_key]
     return pruned_cliques
+
+def cliques_to_dev_train(cliques,percent_dev):
+    '''
+    splits all cliques into dev/train sets so as to not have
+    overlapping songs in dev/train to prevent overfitting
+    '''
+    dev_len = int(len(cliques)*percent_dev)
+    cliques_list = list(cliques.items())
+    train_cliques = dict(cliques_list[:-dev_len])
+    dev_cliques = dict(cliques_list[-dev_len:])
+    return train_cliques, dev_cliques
+
+def randomly_shuffle_xy_data(x,y):
+    # Randomly shuffle data
+    np.random.seed(420)
+    if len(x) != len(y):
+        raise Exception
+    shuffle_indices = np.random.permutation(np.arange(len(y)))
+    x,y = np.array(x), np.array(y)
+    x_shuffled = x[shuffle_indices]
+    y_shuffled = y[shuffle_indices]
+    return x_shuffled, y_shuffled
+
+def binarize_cliques(cliques):
+    '''
+    removes any more than two songs per clique to prevent overfitting
+    '''
+    binary_cliques={}
+    for clique_key, clique_val in cliques.items():
+        binary_cliques[clique_key]=random.sample(cliques[clique_key],2)
+    return binary_cliques
