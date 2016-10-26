@@ -18,8 +18,8 @@ from tensorflow.contrib import learn
 
 # Model Hyperparameters
 #tf.flags.DEFINE_string("filter_sizes", "3,4,5", "Comma-separated filter sizes (default: '3,4,5')")
-#tf.flags.DEFINE_integer("num_filters", 64, "Number of filters per filter size (default: 64)")
-tf.flags.DEFINE_string("cnn", "reg", "which cnn to use (default: 'reg')")
+tf.flags.DEFINE_string("filters_per_layer", '8,8,12,16', "Number of filters per layer (default: 8,8,12,16)")
+tf.flags.DEFINE_string("cnn", "mod", "which cnn to use (default: 'reg')")
 tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularizaion lambda (default: 0.0)")
 tf.flags.DEFINE_float("dropout_factor", 1.0, "Probability of weights to keep for dropout (default: 0.5)")
 tf.flags.DEFINE_float("learning_rate", .0005, "Gradient descent learning rate (default: .0005)")
@@ -48,7 +48,7 @@ print("")
 
 # choose which cnn to use
 # ==================================================
-cnns = {'reg':'audio_cnn', 'small':'audio_cnn_small', 'mod':'audio_cnn_modular'}
+cnns = {'reg':'audio_cnn', 'small':'audio_cnn_small', 'mod':'audio_cnn_mod'}
 AudioCNN = getattr(__import__(cnns[FLAGS.cnn], fromlist=['AudioCNN']), 'AudioCNN')
 
 # Data Preparatopn
@@ -95,6 +95,7 @@ with tf.Graph().as_default():
         cnn = AudioCNN(
             spect_dim=random.choice(list(spect_dict.values())).shape,
             num_classes=2,
+            filters_per_layer = [int(i) for i in FLAGS.filters_per_layer.split(',')],
             l2_reg_lambda=FLAGS.l2_reg_lambda)
 
         # Define Training procedure
