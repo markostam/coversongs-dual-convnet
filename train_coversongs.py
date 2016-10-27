@@ -70,7 +70,6 @@ pruned_cliques = data_helpers.prune_cliques(cliques,spect_dict)
 # remove any more than 2 songs from each clique
 # binary_cliques = data_helpers.binarize_cliques(pruned_cliques)
 binary_cliques = pruned_cliques
-
 # split train/dev set so that there are no songs from same clique overlapping sets
 # TODO: This is very crude, should use cross-validation
 train_cliques, dev_cliques = data_helpers.cliques_to_dev_train(binary_cliques,FLAGS.dev_size)

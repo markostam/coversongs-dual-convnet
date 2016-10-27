@@ -28,13 +28,14 @@ def get_labels(cliques):
     # get and flatten all combination of coversongs
     positive_examples = (list(itertools.combinations(val,2)) for key,val in cliques.items())
     positive_examples = [i for j in positive_examples for i in j]
+    positive_len_og = len(positive_examples)
     positives_flipped = [(i[1],i[0]) for i in positive_examples]
     positive_examples += positives_flipped
     positive_labels = [[1,0] for _ in positive_examples]
     # generate negative examples of an equivalent length to the positive examples list
     song_from_each_clique = (random.choice(val) for key,val in cliques.items())
     negative_examples = itertools.combinations(song_from_each_clique,2)
-    negative_examples = list(itertools.islice(negative_examples, len(positive_examples)))
+    negative_examples = list(itertools.islice(negative_examples, positive_len_og))
     negatives_flipped = [(i[1],i[0]) for i in negative_examples]
     negative_examples += negatives_flipped
     negative_labels = [[0,1] for _ in negative_examples]
