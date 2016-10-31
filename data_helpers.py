@@ -44,6 +44,25 @@ def get_labels(cliques):
     y = positive_labels + negative_labels
     return x,y
 
+def get_labels_for_samesong_test(cliques):
+    '''
+    test function that generates positive examples/labels for songs where positive
+    is just the same song and negative is different song
+    '''
+    # get and flatten all combination of coversongs
+    positive_examples = [(i,i) for j in cliques.values() for i in j]
+    positive_len_og = len(positive_examples)
+    positive_labels = [[1,0] for _ in positive_examples]
+    # generate negative examples of an equivalent length to the positive examples list
+    song_from_each_clique = (random.choice(val) for key,val in cliques.items())
+    negative_examples = itertools.combinations(song_from_each_clique,2)
+    negative_examples = list(itertools.islice(negative_examples, positive_len_og))
+    negative_labels = [[0,1] for _ in negative_examples]
+
+    x = positive_examples + negative_examples
+    y = positive_labels + negative_labels
+    return x,y
+
 def batch_iter(data, batch_size, num_epochs, shuffle=True):
     """
     Generates a batch iterator for a dataset.
