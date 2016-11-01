@@ -31,7 +31,7 @@ tf.flags.DEFINE_float("dev_size", 0.05, "size of the dev batch in percent vs ent
 # Training parameters
 tf.flags.DEFINE_integer("batch_size", 32, "Batch Size (default: 32)")
 tf.flags.DEFINE_integer("num_epochs", 100, "Number of training epochs (default: 100)")
-tf.flags.DEFINE_integer("evaluate_every", 400, "Evaluate model on dev set after this many steps (default: 400)")
+tf.flags.DEFINE_integer("evaluate_every", 100, "Evaluate model on dev set after this many steps (default: 100)")
 tf.flags.DEFINE_integer("checkpoint_every", 800, "Save model after this many steps (default: 200)")
 # Misc Parameters
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
@@ -48,7 +48,7 @@ print("")
 
 # choose which cnn to use
 # ==================================================
-cnns = {'reg':'audio_cnn', 'small':'audio_cnn_small', 'mod':'audio_cnn_mod'}
+cnns = {'mod':'audio_cnn_mod'}
 AudioCNN = getattr(__import__(cnns[FLAGS.cnn], fromlist=['AudioCNN']), 'AudioCNN')
 
 # Data Preparatopn
@@ -59,10 +59,14 @@ print("Loading data...")
 train_loc = "./shs/shs_dataset_train.txt"
 path_to_pickles = "./shs/shs_train_pick_30sec"
 spect_dict = data_helpers.read_from_pickles(path_to_pickles)
-print("Zero-meaning data...")
 # zero-mean spect-dict
+print("Zero-meaning data...")
 spect_dict_mean = np.mean(list(spect_dict.values()),0)
 spect_dict = {k: v-spect_dict_mean for k,v in spect_dict.items()}
+# normalize spect-dict
+print("Normalizing data...")
+spect_dict_std = np.std(list(spect_dict.values()),0)
+spect_dict = {k: v/spect_dict_std for k,v in spect_dict.items()}
 # get cliques from dataset textfile
 cliques = data_helpers.txt_to_cliques(train_loc)
 # prune cliques to make sure we're not referencing songs that weren't downloaded
@@ -115,7 +119,8 @@ with tf.Graph().as_default():
         # Output directory for models and summaries
         timestamp = str(int(time.time()))
         print(save_flags)
-        out_dir = os.path.abspath(os.path.join(os.path.curdir, "runs", ','.join(save_flags)))
+        important_flags = [i for i in save_flags if 'FILTERS_PER_LAYER' in i or 'DROPOUT' in i or 'LEARNING_RATE' in i or 'L2_REG_LAMBDA' in i or 'BATCH_SIZE' in i]
+        out_dir = os.path.abspath(os.path.join(os.path.curdir, "runs", ','.join(important_flags)))
         print("Writing to {}\n".format(out_dir))
         
         # Train/Dev Summary Dirs
@@ -167,7 +172,7 @@ with tf.Graph().as_default():
             of loss and accuracy to cmd line and to summary writer
             '''
             dev_stats = StatisticsCollector()
-
+            pdb.set_trace()
             dev_batches = data_helpers.batch_iter(list(zip(x_dev, y_dev)), 
                                       FLAGS.batch_size, 1)
             for dev_batch in dev_batches:

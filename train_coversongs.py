@@ -59,20 +59,21 @@ print("Loading data...")
 train_loc = "./shs/shs_dataset_train.txt"
 path_to_pickles = "./shs/shs_train_pick_30sec"
 spect_dict = data_helpers.read_from_pickles(path_to_pickles)
-print("Zero-meaning data...")
 # zero-mean spect-dict
+print("Zero-meaning data...")
 spect_dict_mean = np.mean(list(spect_dict.values()),0)
 spect_dict = {k: v-spect_dict_mean for k,v in spect_dict.items()}
+print("Normalizing data...")
+spect_dict_std = np.std(list(spect_dict.values()),0)
+spect_dict = {k: v/spect_dict_std for k,v in spect_dict.items()}
 # get cliques from dataset textfile
 cliques = data_helpers.txt_to_cliques(train_loc)
 # prune cliques to make sure we're not referencing songs that weren't downloaded
 pruned_cliques = data_helpers.prune_cliques(cliques,spect_dict)
-# remove any more than 2 songs from each clique
-# binary_cliques = data_helpers.binarize_cliques(pruned_cliques)
-binary_cliques = pruned_cliques
+
 # split train/dev set so that there are no songs from same clique overlapping sets
 # TODO: This is very crude, should use cross-validation
-train_cliques, dev_cliques = data_helpers.cliques_to_dev_train(binary_cliques,FLAGS.dev_size)
+train_cliques, dev_cliques = data_helpers.cliques_to_dev_train(pruned_cliques,FLAGS.dev_size)
 x_train, y_train = data_helpers.get_labels(train_cliques)
 x_dev, y_dev = data_helpers.get_labels(dev_cliques)
 
@@ -118,7 +119,8 @@ with tf.Graph().as_default():
         # Output directory for models and summaries
         timestamp = str(int(time.time()))
         print(save_flags)
-        out_dir = os.path.abspath(os.path.join(os.path.curdir, "runs", ','.join(save_flags)))
+        important_flags = [i for i in save_flags if 'FILTERS_PER_LAYER' in i or 'DROPOUT' in i or 'LEARNING_RATE' in i or 'L2_REG_LAMBDA' in i or 'BATCH_SIZE' in i]
+        out_dir = os.path.abspath(os.path.join(os.path.curdir, "runs", ','.join(important_flags)))
         print("Writing to {}\n".format(out_dir))
         
         # Train/Dev Summary Dirs
