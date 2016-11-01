@@ -81,7 +81,7 @@ class AudioCNN(object):
             # conv2b
             conv2b = conv(self, x=conv1b, kx=3, ky=3, in_depth=filters_per_layer[0], num_filters=filters_per_layer[1], name='conv2b')
             conv2b = pool(self, conv2b, kx=3, ky=5, name='pool2b')
-            # =8
+            # conv3b
             conv3b = conv(self, x=conv2b, kx=3, ky=3, in_depth=filters_per_layer[1], num_filters=filters_per_layer[2], name='conv3b')
             conv3b = pool(self, conv3b, kx=3, ky=8, name='pool3b')
             # conv4b
@@ -94,7 +94,7 @@ class AudioCNN(object):
 
         # Add dropout
         self.dropout_keep_prob = tf.placeholder(tf.float32)
-        drop = tf.nn.dropout(self.songs_vector, self.dropout_keep_prob)
+        self.drop = tf.nn.dropout(self.songs_vector, self.dropout_keep_prob)
 
         # Final (unnormalized) scores and predictions
         with tf.name_scope("output"), tf.device('/gpu:2'):
@@ -103,10 +103,12 @@ class AudioCNN(object):
                 shape=[2*filters_per_layer[3], num_classes],
                 initializer=tf.contrib.layers.xavier_initializer())
             b = tf.Variable(tf.constant(0.1, shape=[num_classes]), "b")
-            l2_loss += tf.nn.l2_loss(W)
-            l2_loss += tf.nn.l2_loss(b)
-            self.scores = tf.nn.xw_plus_b(drop, W, b, name="scores")
+            self.scores = tf.nn.xw_plus_b(self.drop, W, b, name="scores")
             self.predictions = tf.argmax(self.scores, 1, name="predictions")
+
+        # Calculate L2 loss
+        vars = tf.trainable_variables()
+        l2_loss = tf.add_n([tf.nn.l2_loss(v) for v in vars])
 
         # Calculate Mean cross-entropy loss
         with tf.name_scope("loss"), tf.device('/gpu:3'):
