@@ -31,33 +31,34 @@ def get_labels(cliques):
     positive_len_og = len(positive_examples)
     positives_flipped = [(i[1],i[0]) for i in positive_examples]
     positive_examples += positives_flipped
-    positive_labels = [[1,0] for _ in positive_examples]
+    positive_labels = [[0,1] for _ in positive_examples]
     # generate negative examples of an equivalent length to the positive examples list
     song_from_each_clique = (random.choice(val) for key,val in cliques.items())
     negative_examples = itertools.combinations(song_from_each_clique,2)
     negative_examples = list(itertools.islice(negative_examples, positive_len_og))
     negatives_flipped = [(i[1],i[0]) for i in negative_examples]
     negative_examples += negatives_flipped
-    negative_labels = [[0,1] for _ in negative_examples]
+    negative_labels = [[1,0] for _ in negative_examples]
 
     x = positive_examples + negative_examples
     y = positive_labels + negative_labels
     return x,y
+
 
 def get_labels_for_samesong_test(cliques):
     '''
     test function that generates positive examples/labels for songs where positive
     is just the same song and negative is different song
     '''
-    # get and flatten all combination of coversongs
+    # positive examples are the same songs
     positive_examples = [(i,i) for j in cliques.values() for i in j]
     positive_len_og = len(positive_examples)
-    positive_labels = [[1,0] for _ in positive_examples]
-    # generate negative examples of an equivalent length to the positive examples list
+    positive_labels = [[0,1] for _ in positive_examples]
+    # negative examples are any other song combination
     song_from_each_clique = (random.choice(val) for key,val in cliques.items())
     negative_examples = itertools.combinations(song_from_each_clique,2)
     negative_examples = list(itertools.islice(negative_examples, positive_len_og))
-    negative_labels = [[0,1] for _ in negative_examples]
+    negative_labels = [[1,0] for _ in negative_examples]
 
     x = positive_examples + negative_examples
     y = positive_labels + negative_labels
