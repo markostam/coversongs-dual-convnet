@@ -21,7 +21,7 @@ class AudioCNN(object):
             '''
             Function wrapper for creating a layer with random initializer
             '''
-            return tf.get_variable(name, shape, reuse=True, initializer=initializer)
+            return tf.get_variable(name, shape, initializer=initializer)
 
         def conv(self, x, kx, ky, in_depth, num_filters, sx=1, sy=1, name=None):
             '''
@@ -33,7 +33,7 @@ class AudioCNN(object):
             in_depth    : depth of input tensor
             num_filters : number of conv filters
             '''
-            with tf.variable_scope(name) as scope:
+            with tf.variable_scope(name, reuse=True) as scope:
                 kernel = create_variable(self, "weights", [kx, ky, in_depth, num_filters], tf.contrib.layers.xavier_initializer_conv2d())
                 bias = create_variable(self, "bias", [num_filters])
                 conv = tf.nn.relu(tf.nn.bias_add(
