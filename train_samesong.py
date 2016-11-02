@@ -172,7 +172,6 @@ with tf.Graph().as_default():
             of loss and accuracy to cmd line and to summary writer
             '''
             dev_stats = StatisticsCollector()
-            pdb.set_trace()
             dev_batches = data_helpers.batch_iter(list(zip(x_dev, y_dev)), 
                                       FLAGS.batch_size, 1)
             for dev_batch in dev_batches:
