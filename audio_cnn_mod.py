@@ -103,7 +103,7 @@ class AudioCNN(object):
         with tf.name_scope("output"), tf.device('/gpu:2'):
             W = tf.get_variable(
                 "W",
-                shape=[2*filters_per_layer[3], num_classes],
+                shape=[filters_per_layer[3], num_classes],
                 initializer=tf.contrib.layers.xavier_initializer())
             b = tf.Variable(tf.constant(0.1, shape=[num_classes]), "b")
             self.scores = tf.nn.xw_plus_b(self.drop, W, b, name="scores")
