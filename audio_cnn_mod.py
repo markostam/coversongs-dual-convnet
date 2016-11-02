@@ -86,15 +86,18 @@ class AudioCNN(object):
             conv3b = pool(self, conv3b, kx=3, ky=8, name='pool3b')
             # conv4b
             conv4b = conv(self, x=conv3b, kx=3, ky=3, in_depth=filters_per_layer[2], num_filters=filters_per_layer[3], name='conv4b')
-            conv4b = pool(self, conv4b, kx=5, ky=8, name='pool4b') # 5,8 for 30 sec; 5,17 for 1min       
+            conv4b = pool(self, conv4b, kx=5, ky=8, name='pool4b') # 5,8 for 30 sec; 5,17 for 1min 
             self.song2_out = tf.reshape(conv4b, [-1, filters_per_layer[3]])
 
         # concatenate transformed song vectors
-        self.songs_vector = tf.concat(1, [self.song1_out,self.song2_out])
+        # self.songs_vector = tf.concat(1, [self.song1_out,self.song2_out])
+
+        # calculate distance of song vectors from each other
+        self.vec_distance = tf.square(tf.sub(self.song1_out,self.song2_out))
 
         # Add dropout
         self.dropout_keep_prob = tf.placeholder(tf.float32)
-        self.drop = tf.nn.dropout(self.songs_vector, self.dropout_keep_prob)
+        self.drop = tf.nn.dropout(self.vec_distance, self.dropout_keep_prob)
 
         # Final (unnormalized) scores and predictions
         with tf.name_scope("output"), tf.device('/gpu:2'):
