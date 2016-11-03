@@ -65,8 +65,8 @@ spect_dict_mean = np.mean(list(spect_dict.values()),0)
 spect_dict = {k: v-spect_dict_mean for k,v in spect_dict.items()}
 # normalize spect-dict
 print("Normalizing data...")
-#spect_dict_std = np.std(list(spect_dict.values()),0)
-#spect_dict = {k: v/spect_dict_std for k,v in spect_dict.items()}
+spect_dict_std = np.std(list(spect_dict.values()),0)
+spect_dict = {k: v/spect_dict_std for k,v in spect_dict.items()}
 # get cliques from dataset textfile
 cliques = data_helpers.txt_to_cliques(train_loc)
 # prune cliques to make sure we're not referencing songs that weren't downloaded

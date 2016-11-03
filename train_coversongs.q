@@ -7,7 +7,7 @@
 #PBS -M mss460@nyu.edu
 #PBS -d /scratch/mss460/CoverSongs2
 #PBS -l nodes=1:ppn=2:gpus=1:k80
-#PBS -l mem=20GB
+#PBS -l mem=36GB
 #PBS -l walltime=24:00:00
 
 # max batchsize on tesla k80 = 10
