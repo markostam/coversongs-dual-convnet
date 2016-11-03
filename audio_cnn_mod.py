@@ -34,13 +34,12 @@ class AudioCNN(object):
             num_filters : number of conv filters
             '''
             with tf.variable_scope(name) as scope:
-                scope.reuse_variables()
                 kernel = create_variable(self, "weights", [kx, ky, in_depth, num_filters], tf.contrib.layers.xavier_initializer_conv2d())
                 bias = create_variable(self, "bias", [num_filters])
                 conv = tf.nn.relu(tf.nn.bias_add(
                        tf.nn.conv2d(x, kernel, strides=[1, sx, sy, 1], padding='SAME'), bias),
                                     name=scope.name)
-                #self.add_layer(name, conv)
+                scope.reuse_variables()
             return conv
 
         def pool(self, x, kx, ky, sx=None, sy=None, name=None):
