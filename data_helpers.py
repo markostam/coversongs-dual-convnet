@@ -29,6 +29,7 @@ def get_labels(cliques):
     positive_examples = (list(itertools.combinations(val,2)) for key,val in cliques.items())
     positive_examples = [i for j in positive_examples for i in j]
     positive_len_og = len(positive_examples)
+    positive_labels = [[0,1] for _ in positive_examples]
     # generate negative examples of an equivalent length to the positive examples list
     song_from_each_clique = (random.choice(val) for key,val in cliques.items())
     negative_examples = itertools.combinations(song_from_each_clique,2)
