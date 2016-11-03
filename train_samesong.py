@@ -6,12 +6,9 @@ import os
 import time
 import datetime
 import data_helpers
-import gzip
-import pickle
 import random
 import pdb
 from stat_collector import StatisticsCollector
-from tensorflow.contrib import learn
 
 # Parameters
 # ==================================================
@@ -61,8 +58,8 @@ path_to_pickles = "./shs/shs_train_pick_30sec"
 spect_dict = data_helpers.read_from_pickles(path_to_pickles)
 # zero-mean spect-dict
 print("Zero-meaning data...")
-spect_dict_mean = np.mean(list(spect_dict.values()),0)
-spect_dict = {k: v-spect_dict_mean for k,v in spect_dict.items()}
+#spect_dict_mean = np.mean(list(spect_dict.values()),0)
+#spect_dict = {k: v-spect_dict_mean for k,v in spect_dict.items()}
 # normalize spect-dict
 print("Normalizing data...")
 spect_dict_std = np.std(list(spect_dict.values()),0)
@@ -122,7 +119,7 @@ with tf.Graph().as_default():
         important_flags = [i for i in save_flags if 'FILTERS_PER_LAYER' in i or 'DROPOUT' in i or 'LEARNING_RATE' in i or 'L2_REG_LAMBDA' in i or 'BATCH_SIZE' in i]
         out_dir = os.path.abspath(os.path.join(os.path.curdir, "runs", ','.join(important_flags)))
         print("Writing to {}\n".format(out_dir))
-        
+
         # Train/Dev Summary Dirs
         train_summary_dir = os.path.join(out_dir, "summaries", "train")
         train_summary_writer = tf.train.SummaryWriter(train_summary_dir, sess.graph)
@@ -168,11 +165,11 @@ with tf.Graph().as_default():
             Evaluates model on full dev set.
             --------------------------------
             Since full dev set likely won't fit into memory, this function
-            splits the dev set into minibatches and returns the average 
+            splits the dev set into minibatches and returns the average
             of loss and accuracy to cmd line and to summary writer
             '''
             dev_stats = StatisticsCollector()
-            dev_batches = data_helpers.batch_iter(list(zip(x_dev, y_dev)), 
+            dev_batches = data_helpers.batch_iter(list(zip(x_dev, y_dev)),
                                       FLAGS.batch_size, 1)
             for dev_batch in dev_batches:
                 if len(dev_batch) > 0:
