@@ -33,7 +33,8 @@ class AudioCNN(object):
             in_depth    : depth of input tensor
             num_filters : number of conv filters
             '''
-            with tf.variable_scope(name, reuse=True) as scope:
+            with tf.variable_scope(name) as scope:
+                scope.reuse_variables()
                 kernel = create_variable(self, "weights", [kx, ky, in_depth, num_filters], tf.contrib.layers.xavier_initializer_conv2d())
                 bias = create_variable(self, "bias", [num_filters])
                 conv = tf.nn.relu(tf.nn.bias_add(
