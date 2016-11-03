@@ -17,11 +17,11 @@ class AudioCNN(object):
         self.input_y = tf.placeholder(tf.float32, [None, num_classes], name="input_y")
 
         # create wrappers for basic convnet functions
-        def create_variable(self, name, shape, reuse=None, initializer = tf.random_normal_initializer()):
+        def create_variable(self, name, shape, initializer = tf.random_normal_initializer()):
             '''
             Function wrapper for creating a layer with random initializer
             '''
-            return tf.get_variable(name, shape, reuse=reuse, initializer=initializer)
+            return tf.get_variable(name, shape, reuse=True, initializer=initializer)
 
         def conv(self, x, kx, ky, in_depth, num_filters, sx=1, sy=1, name=None):
             '''
@@ -34,8 +34,8 @@ class AudioCNN(object):
             num_filters : number of conv filters
             '''
             with tf.variable_scope(name) as scope:
-                kernel = create_variable(self, "weights", [kx, ky, in_depth, num_filters], tf.contrib.layers.xavier_initializer_conv2d(), reuse=True)
-                bias = create_variable(self, "bias", [num_filters], reuse=True)
+                kernel = create_variable(self, "weights", [kx, ky, in_depth, num_filters], tf.contrib.layers.xavier_initializer_conv2d())
+                bias = create_variable(self, "bias", [num_filters])
                 conv = tf.nn.relu(tf.nn.bias_add(
                        tf.nn.conv2d(x, kernel, strides=[1, sx, sy, 1], padding='SAME'), bias),
                                     name=scope.name)
