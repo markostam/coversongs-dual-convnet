@@ -8,7 +8,7 @@
 #PBS -d /scratch/mss460/CoverSongs2
 #PBS -l nodes=1:ppn=2:gpus=1:k80
 #PBS -l mem=20GB
-#PBS -l walltime=48:00:00
+#PBS -l walltime=24:00:00
 
 # max batchsize on tesla k80 = 10
 # max batchsize on titan black = 5
@@ -19,4 +19,4 @@ module purge
 module load tensorflow/python3.5.1/20160418
 cd /scratch/mss460/CoverSongs2
 
-python3.5 /scratch/mss460/CoverSongs2/train_coversongs.py --batch_size 192  --num_epochs 1000 --dropout_factor 0.5 --l2_reg_lambda .5 --dev_size_percent .30 --evaluate_every 100 --learning_rate 0.00005 --filters_per_layer '12,16:wq,20,24'
+python3.5 /scratch/mss460/CoverSongs2/train_coversongs.py --batch_size 128  --num_epochs 100 --dropout_factor 0.6 --l2_reg_lambda .005 --dev_size_percent .05 --evaluate_every 100 --learning_rate 0.00005 --filters_per_layer '16,32,64,128'
