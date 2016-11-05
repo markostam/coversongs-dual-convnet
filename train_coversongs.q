@@ -16,7 +16,7 @@
 # echo "import sys; sys.setdefaultencoding('utf-8')" > sitecustomize.py
 export PYTHONIOENCODING=utf-8
 module purge
-module load tensorflow/python3.5.1/20160418
+module load tensorflow/python3.5.1/20161029
 cd /scratch/mss460/CoverSongs2
 
-python3.5 /scratch/mss460/CoverSongs2/train_coversongs.py --batch_size 128  --num_epochs 100 --dropout_factor 0.6 --l2_reg_lambda .005 --dev_size_percent .05 --evaluate_every 100 --learning_rate 0.00005 --filters_per_layer '16,32,64,128'
+python3.5 /scratch/mss460/CoverSongs2/train_coversongs.py --batch_size 16  --num_epochs 1000 --dropout_factor 0.5 --l2_reg_lambda .05 --dev_size_percent .1 --evaluate_every 100 --learning_rate 0.000005 --filters_per_layer '128,96,64,32'
