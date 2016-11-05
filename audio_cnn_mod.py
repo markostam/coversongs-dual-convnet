@@ -1,4 +1,5 @@
 import tensorflow as tf
+import tensorflow.contrib.layers.python.layers as tf_new
 import numpy as np
 import pdb
 
@@ -23,7 +24,7 @@ class AudioCNN(object):
             '''
             return tf.get_variable(name, shape, initializer=initializer)
 
-        def conv(self, x, kx, ky, in_depth, num_filters, sx=1, sy=1, name=None, reuse=None):
+        def conv(self, x, kx, ky, in_depth, num_filters, sx=1, sy=1, name=None, reuse=None, batch_norm=True):
             '''
             Function that defines a convolutional layer
             -------------------------------------------
@@ -39,6 +40,9 @@ class AudioCNN(object):
                 conv = tf.nn.relu(tf.nn.bias_add(
                        tf.nn.conv2d(x, kernel, strides=[1, sx, sy, 1], padding='SAME'), bias),
                                     name=scope.name)
+                if batch_norm:
+                    # batch normalization
+                    conv = tf_new.batch_norm(conv,scale=False)
             return conv
 
         def pool(self, x, kx, ky, sx=None, sy=None, name=None):

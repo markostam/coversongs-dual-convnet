@@ -8,7 +8,7 @@ class AudioCNN(object):
     Uses two pipelines of four convolutional layers & max-pooling layers followed tied together by a binary softmax layer.
     """
     def __init__(
-      self, spect_dim, num_classes, gap_reg = 0.0,
+      self, spect_dim, num_classes, gap_reg = 0.0001,
       filters_per_layer, l2_reg_lambda=0.0):
 
         # Placeholders for input, output and dropout

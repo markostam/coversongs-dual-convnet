@@ -1,4 +1,5 @@
 import tensorflow as tf
+from sklearn.metrics import precision_recall_fscore_support as score
 
 class StatisticsCollector(object):
     '''
