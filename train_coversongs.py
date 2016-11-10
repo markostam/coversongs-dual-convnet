@@ -48,7 +48,7 @@ print("")
 
 # choose which cnn to use
 # ==================================================
-cnns = {'reg':'audio_cnn', 'small':'audio_cnn_small', 'mod':'audio_cnn_mod'}
+cnns = {'mod':'audio_cnn_mod', 'triple':'audio_cnn_triple'}
 AudioCNN = getattr(__import__(cnns[FLAGS.cnn], fromlist=['AudioCNN']), 'AudioCNN')
 
 # Data Preparatopn
