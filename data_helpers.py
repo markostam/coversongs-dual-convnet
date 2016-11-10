@@ -55,6 +55,19 @@ def triplets_generator(cliques):
             for neg in negative_songs:
                 yield positive_pair+(neg,)
 
+def resevoir_sample(triplets, length_of_triplets=659554630, length_of_output=int(2e7)):
+    '''
+    function that takes a generator (triplets) which has a huge amoung of outputs 
+    and randomly samples from it in order to create a new (smaller) randomized dataset 
+    '''
+    rand_indices = random.sample(range(length_of_triplets), length_of_output)
+    output = [None]*length_of_output
+    for triplet_index, triplet in enumerate(triplets):
+        if triplet_index in rand_indices:
+            # pdb.set_trace()
+            output[rand_indices.index(triplet_index)] = triplet
+    return output
+
 def get_labels_for_samesong_test(cliques):
     '''
     test function that generates positive examples/labels for songs where positive
