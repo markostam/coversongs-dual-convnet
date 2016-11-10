@@ -9,8 +9,8 @@ class AudioCNN(object):
     Uses two pipelines of four convolutional layers & max-pooling layers followed tied together by a binary softmax layer.
     """
     def __init__(
-      self, spect_dim, num_classes, gap_reg = 0.0001,
-      filters_per_layer, l2_reg_lambda=0.0):
+      self, spect_dim, num_classes,
+      filters_per_layer, l2_reg_lambda=0.0, gap_reg = 0.0001):
 
         # Placeholders for input, output and dropout
         self.query = tf.placeholder(tf.float32, [None, *spect_dim], name="query")
@@ -68,7 +68,7 @@ class AudioCNN(object):
             y           : input tensor
             '''
             with tf.variable_scope(name) as scope:
-                dist = tf.sqrt(tf.reduce_sum(tf.square(tf.sub(x, y)), reduction_indices=1))
+                dist = tf.sqrt(tf.reduce_sum(tf.square(tf.sub(x, y)), reduction_indices=0))
             return dist
 
         # Keeping track of l2 regularization loss (optional)
@@ -123,11 +123,11 @@ class AudioCNN(object):
         # Calculate euclidean distances
         self.distance_similar = euclidean_distance(self, self.query_out, self.similar_out, name='distance_similar')
         self.distance_different = euclidean_distance(self, self.query_out, self.different_out, name='distance_different')
-        self.predictions = tf.argmax(self.distance_different,self.distance_similar,1)
+        self.predictions = tf.argmax([self.distance_different,self.distance_similar],0)
 
         # Calculate hinge loss
         with tf.name_scope("loss"), tf.device('/gpu:3'):
-            self.loss = tf.max(0.0, tf.sum(gap_reg, tf.sub(self.distance_similar, self.distance_different)))
+            self.loss = tf.maximum(0.0, tf.add(gap_reg, tf.sub(self.distance_similar, self.distance_different)))
 
         # Accuracy
         with tf.name_scope("accuracy"), tf.device('/gpu:3'):
