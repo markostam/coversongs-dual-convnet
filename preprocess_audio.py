@@ -29,10 +29,10 @@ def feature_extract(songfile_name):
 					n_bins=84, bins_per_octave=12, tuning=None,
 					filter_scale=1, norm=1, sparsity=0.01, real=False)
 	# get log-power spectrogram with noise floor of -80dB
-	C = librosa.logamplitude(C**2)
+	C = librosa.logamplitude(C**2, ref_power=np.max)
 	# scale log-power spectrogram to positive integer value for smaller footpint
 	noise_floor_db = 80
-	scaling_factor = (2**16 - 1)/noise_floor_db
+	scaling_factor = (2**15 - 1)/noise_floor_db
 	C += noise_floor_db
 	C *= scaling_factor
 	C = C.astype('uint16')
