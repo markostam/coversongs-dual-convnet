@@ -6,5 +6,5 @@ Deep learning model in python and [tensorflow](https://www.tensorflow.org) train
 Dataset is the [secondhand songs set](http://labrosa.ee.columbia.edu/millionsong/secondhand), which is a subset of the [million song dataset](http://labrosa.ee.columbia.edu/millionsong/).
 
 
-![thing](https://github.com/markostam/coversongs-dual-convnet/blob/master/Poster/WNYISPW_2016_CoverSongs.pdf)
+![thing](https://github.com/markostam/coversongs-dual-convnet/blob/master/Poster/WNYISPW_2016_CoverSongs.png)
 
