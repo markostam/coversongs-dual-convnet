@@ -32,7 +32,7 @@ def feature_extract(songfile_name):
 	C = librosa.logamplitude(C**2, ref_power=np.max)
 	# scale log-power spectrogram to positive integer value for smaller footpint
 	noise_floor_db = 80
-	scaling_factor = (2**15 - 1)/noise_floor_db
+	scaling_factor = (2**16 - 1)/noise_floor_db
 	C += noise_floor_db
 	C *= scaling_factor
 	C = C.astype('uint16')
@@ -83,7 +83,7 @@ def create_feature_matrix_spark(song_files):
 		n_bins=84, bins_per_octave=12, tuning=None,
 		filter_scale=1, norm=1, sparsity=0.01, real=True)
 		# get log-power spectrogram with noise floor of -80dB
-		C = librosa.logamplitude(C**2)
+		C = librosa.logamplitude(C**2, ref_power=np.max)
 		# scale log-power spectrogram to positive integer value for smaller footpint
 		noise_floor_db = 80
 		scaling_factor = (2**16 - 1)/noise_floor_db
@@ -119,24 +119,37 @@ def save_feature_matrix_spark(song_files,save_path,save_name):
 	with gzip.open(os.path.join(save_path,save_name), "wb") as fileHandle:
 		pickle.dump(fm, fileHandle)
 
-def process_chunks(song_folder, save_path, num_chunks, train_or_test="train"):
+def process_chunks(song_folder, save_path, overwrite = False, num_chunks=20, train_or_test="train"):
     '''
     chunk feature matrix creation to deal with memory constraints
     will split the output files in to num_chunks chunks
     '''
-	files = [os.path.join(song_folder,filename) for filename in os.listdir(song_folder) if filename.endswith(".mp3")]
+    files = [os.path.join(song_folder,filename) for filename in os.listdir(song_folder) if filename.endswith(".mp3")]
     chunk_size = int(len(files)/num_chunks)
     j=0
     for i in range(0, len(files), chunk_size):
-    	j+=1
-        save_feature_matrix_spark(files[i:i + chunk_size],save_path,'{}_set_cqt{}.pickle.gz'.format(train_or_test,j))
+        j+=1
+        save_name = '{}_set_cqt{}.pickle.gz'.format(train_or_test,j)
+        if not os.path.isfile(os.path.join(save_path,save_name)) or overwrite:
+        	save_feature_matrix_spark(files[i:i + chunk_size],save_path,save_name)
+        else:
+        	print('{} already exists. Skipping file.'.format(save_name))
 
 # cluster
-song_folder = '/scratch/mss460/shs/shs_train'
-save_path = '/home/mss460/training_set_cqt.pickle'
+# song_folder = '/scratch/mss460/shs/shs_train'
+# save_path = '/home/mss460/training_set_cqt.pickle'
 # hadoop song folder
 hadoop_song_folder = '/user/mss460/shs/shs_train'
 
 # local
 song_folder = '/Users/markostamenovic/Desktop/shs_train'
 save_path = '/Users/markostamenovic/Desktop/shs_train_pickles'
+
+# run with command:
+# spark-submit --driver-memory 8g --conf spark.driver.maxResultSize=2g preprocess_audio.py
+
+if __name__ == "__main__":
+	from pyspark import SparkContext
+	sc = SparkContext()
+	print("Executing as main program")
+	process_chunks(song_folder, save_path, overwrite = False, num_chunks=20, train_or_test="train")
