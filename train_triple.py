@@ -19,7 +19,7 @@ from tensorflow.contrib import learn
 # Model Hyperparameters
 #tf.flags.DEFINE_string("filter_sizes", "3,4,5", "Comma-separated filter sizes (default: '3,4,5')")
 tf.flags.DEFINE_string("filters_per_layer", '8,8,12,16', "Number of filters per layer (default: 8,8,12,16)")
-tf.flags.DEFINE_string("cnn", "mod", "which cnn to use (default: 'reg')")
+tf.flags.DEFINE_string("cnn", "triplets", "which cnn to use (default: 'reg')")
 tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularizaion lambda (default: 0.0)")
 tf.flags.DEFINE_float("dropout_factor", 1.0, "Probability of weights to keep for dropout (default: 0.5)")
 tf.flags.DEFINE_float("learning_rate", .0001, "Gradient descent learning rate (default: .0005)")
@@ -48,7 +48,7 @@ print("")
 
 # choose which cnn to use
 # ==================================================
-cnns = {'mod':'audio_cnn_mod', 'triple':'audio_cnn_triple'}
+cnns = {'mod':'audio_cnn_mod', 'triplets':'audio_cnn_triples'}
 AudioCNN = getattr(__import__(cnns[FLAGS.cnn], fromlist=['AudioCNN']), 'AudioCNN')
 
 # Data Preparatopn
